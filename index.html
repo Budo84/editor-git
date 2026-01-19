@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD Editor PWA</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { height: 100vh; display: flex; flex-direction: column; overscroll-behavior-y: none; }
+        #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
+        textarea.dragging { border: 4px dashed #3b82f6; background-color: #eff6ff; }
+        textarea { resize: none; outline: none; transition: all 0.2s; }
+        .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; }
+        .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose p { margin-bottom: 1em; }
+        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace;}
+        .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
+        .prose hr { border-top: 2px dashed #ccc; margin: 2em 0; }
+        .prose img { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 sticky top-0">
+        <div class="flex flex-wrap gap-2 items-end">
+            <button onclick="prependFrontMatter()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold mr-2 border border-gray-300" title="Inserisci intestazione">+ Meta</button>
+            <input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none">
+            <input type="text" id="gh-owner" placeholder="User" class="border rounded px-2 py-1 text-sm w-20 focus:border-blue-500 outline-none">
+            <input type="text" id="gh-repo" placeholder="Repo" class="border rounded px-2 py-1 text-sm w-20 focus:border-blue-500 outline-none">
+            <input type="text" id="gh-path" placeholder="posts/doc.md" class="border rounded px-2 py-1 text-sm flex-grow md:w-auto focus:border-blue-500 outline-none font-mono">
+            <button onclick="syncTextToGitHub()" id="save-btn" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">Salva</button>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded border border-dashed border-gray-300 hidden md:flex">
+             <div class="flex items-center gap-2">
+                <label class="text-xs text-gray-600">Img Path:</label>
+                <input type="text" id="gh-img-base" value="static/img/" class="border rounded px-2 py-1 text-xs w-28 font-mono">
+            </div>
+            <div class="flex items-center gap-2 border-l pl-4 border-gray-300">
+                <input type="checkbox" id="chk-ask-path" class="w-4 h-4">
+                <label for="chk-ask-path" class="text-xs text-gray-700">Chiedi conferma nome file</label>
+            </div>
+        </div>
+    </header>
+
+    <div id="editor-area">
+        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none" placeholder="Loading..."></textarea>
+        <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm"><span class="font-bold text-blue-600">Caricamento...</span></div>
+    </div>
+
+    <div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg text-sm"></div>
+
+    <script>
+        // PWA Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrato!', reg))
+                    .catch(err => console.log('SW fallito:', err));
+            });
+        }
+
+        // Logic (Condensata per brevità - include le funzioni precedenti)
+        const input = document.getElementById('markdown-input');
+        const preview = document.getElementById('preview-output');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        marked.setOptions({ breaks: true, gfm: true });
+
+        // Restore Data from LocalStorage (per non perdere il lavoro se chiudi l'app)
+        input.value = localStorage.getItem('md_draft') || "";
+
+        function getFrontMatterTemplate() {
+            const today = new Date().toISOString().split('T')[0];
+            return `---\ntitle: Titolo\ndraft: false\ndate: ${today}\nimage: /img/foto.jpg\ncategory: Tech\nclass_target: Tutti\ndescription: Descrizione\n---\n\n`;
+        }
+
+        function prependFrontMatter() {
+            if (input.value.trim().startsWith('---') && !confirm("Intestazione già presente. Aggiungere comunque?")) return;
+            input.value = getFrontMatterTemplate() + input.value;
+            triggerInput();
+        }
+
+        if(!input.value) { prependFrontMatter(); }
+        else { triggerInput(); }
+
+        input.addEventListener('input', triggerInput);
+        
+        function triggerInput() {
+            localStorage.setItem('md_draft', input.value); // Auto-save locale
+            preview.innerHTML = marked.parse(input.value);
+        }
+
+        function showStatus(msg, isErr = false) {
+            const el = document.getElementById('status-msg');
+            el.innerText = msg;
+            el.style.backgroundColor = isErr ? '#dc2626' : '#1f2937';
+            el.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+
+        // --- GitHub Logic (Identica a prima) ---
+        function getCreds() { return { token: document.getElementById('gh-token').value, owner: document.getElementById('gh-owner').value, repo: document.getElementById('gh-repo').value }; }
+
+        // Drag & Drop
+        input.addEventListener('dragover', e => { e.preventDefault(); input.classList.add('dragging'); });
+        input.addEventListener('dragleave', () => input.classList.remove('dragging'));
+        input.addEventListener('drop', async e => {
+            e.preventDefault(); input.classList.remove('dragging');
+            if(e.dataTransfer.files[0]) await uploadImage(e.dataTransfer.files[0]);
+        });
+
+        async function uploadImage(file) {
+            const creds = getCreds();
+            if(!creds.token) return showStatus("Token mancante!", true);
+            
+            loadingOverlay.classList.remove('hidden');
+            try {
+                const base = document.getElementById('gh-img-base').value.replace(/\/$/, '') + '/';
+                let path = base + new Date().toISOString().slice(0,19).replace(/[:.]/g,'-') + '_' + file.name.replace(/\s/g,'_');
+                
+                if(document.getElementById('chk-ask-path').checked) {
+                    const userPath = prompt("Path immagine:", path);
+                    if(!userPath) return loadingOverlay.classList.add('hidden');
+                    path = userPath;
+                }
+
+                const buf = await file.arrayBuffer();
+                const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+                
+                await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${creds.token}` },
+                    body: JSON.stringify({ message: `Img ${path}`, content: b64 })
+                }).then(r => { if(!r.ok) throw new Error('Err'); return r.json()})
+                  .then(d => {
+                      const md = `\n![${file.name}](${d.content.download_url})\n`;
+                      input.setRangeText(md, input.selectionStart, input.selectionEnd, 'end');
+                      triggerInput();
+                      showStatus("Immagine caricata!");
+                  });
+            } catch(e) { showStatus("Errore Upload", true); }
+            loadingOverlay.classList.add('hidden');
+        }
+
+        async function syncTextToGitHub() {
+            const creds = getCreds();
+            const path = document.getElementById('gh-path').value;
+            if(!creds.token) return showStatus("Dati mancanti", true);
+            
+            const btn = document.getElementById('save-btn'); btn.innerText = "...";
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
+                let sha = null;
+                try { sha = (await fetch(url, { headers: {'Authorization': `token ${creds.token}`} }).then(r=>r.json())).sha; } catch(e){}
+                
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: {'Authorization': `token ${creds.token}`},
+                    body: JSON.stringify({
+                        message: `Update ${path}`,
+                        content: btoa(unescape(encodeURIComponent(input.value))),
+                        sha: sha
+                    })
+                }).then(r => { if(!r.ok) throw new Error(); showStatus("Salvato!"); });
+            } catch(e) { showStatus("Errore salvataggio", true); }
+            btn.innerText = "Salva";
+        }
+    </script>
+</body>
+</html>
