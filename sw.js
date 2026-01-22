@@ -1,15 +1,14 @@
-const CACHE_NAME = 'md-editor-v1';
+const CACHE_NAME = 'md-editor-v2'; // Ho cambiato versione per forzare l'aggiornamento
 const ASSETS_TO_CACHE = [
-    './',
-    './index.html',
+    './editor.html',      // <--- IMPORTANTE: punta al tuo editor
     './manifest.json',
-    // CDN esterne (Tailwind e Marked). 
-    // Nota: La cache dinamica (sotto) è più robusta per i CDN, ma li elenchiamo qui per sicurezza.
+    './icon.png',         // Ricordati di caricare l'icona!
     'https://cdn.tailwindcss.com',
-    'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
+    'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
+    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js' // Aggiungiamo MathJax che hai messo prima
 ];
 
-// Installazione: scarica le risorse essenziali
+// ...lascia il resto del file uguale...
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -18,25 +17,11 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Fetch: intercetta le richieste di rete
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            // Se è nella cache, restituiscilo
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            // Altrimenti scaricalo dalla rete
-            return fetch(event.request).then((networkResponse) => {
-                // Se è una risposta valida, salvala nella cache per il futuro (Cache Dinamica)
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-                    const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
-                    });
-                }
-                return networkResponse;
-            });
+            if (cachedResponse) return cachedResponse;
+            return fetch(event.request);
         })
     );
 });
