@@ -1,10 +1,10 @@
 {
-  "name": "GitHub MD Editor",
-  "short_name": "MD Edit",
-  "start_url": "./index.html",
+  "name": "Proflama Editor",
+  "short_name": "Editor",
+  "start_url": "./editor.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#3b82f6",
   "icons": [
     {
       "src": "icon.png",
