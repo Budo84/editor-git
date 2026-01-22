@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MD Editor Pro: Math + GitHub Sync</title>
+    <title>Proflama Editor</title>
+    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
-    <meta name="theme-color" content="#3b82f6">
     <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#3b82f6">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <script>
         window.MathJax = {
             tex: {
@@ -31,18 +34,12 @@
         .prose { padding-bottom: 3rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; }
         .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; }
-        .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; }
         .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
         .prose p { margin-bottom: 1em; line-height: 1.6; }
         .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; }
         .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
-        .prose pre code { background-color: transparent; color: white; padding: 0; }
-        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
-        .prose img { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .prose img { max-width: 100%; border-radius: 8px; margin: 1em 0; }
         .prose hr { border-top: 2px dashed #ccc; margin: 2em 0; }
-        
-        /* Stile per le formule */
         mjx-container { outline: none !important; }
     </style>
 </head>
@@ -50,12 +47,12 @@
 
     <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10">
         <div class="flex flex-wrap gap-2 items-end">
-            <button onclick="prependFrontMatter()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold mr-2 border border-gray-300" title="Inserisci intestazione articolo">
+            <button onclick="prependFrontMatter()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold mr-2 border border-gray-300" title="Inserisci intestazione">
                 + Metadata
             </button>
 
             <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">GitHub Token</label>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Token</label>
                 <input type="password" id="gh-token" value="" placeholder="ghp_..." class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none">
             </div>
             <div class="flex flex-col">
@@ -68,9 +65,9 @@
             </div>
             
             <div class="flex flex-col flex-grow md:flex-grow-0 relative">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Percorso File MD</label>
+                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">File Path</label>
                 <div class="flex">
-                    <input type="text" id="gh-path" placeholder="docs/posts/nome-file.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono">
+                    <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono">
                     <button onclick="loadFromGitHub()" id="load-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 text-xs font-bold border-l border-slate-600" title="Carica file esistente">
                         📂
                     </button>
@@ -78,43 +75,35 @@
             </div>
             
             <button onclick="syncTextToGitHub()" id="save-btn" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
                 Salva MD
             </button>
         </div>
 
         <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded border border-dashed border-gray-300">
-            <span class="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
-                📷 Drag & Drop
-            </span>
+            <span class="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">📷 Img</span>
             
             <div class="flex items-center gap-2">
-                <label class="text-xs text-gray-600">Cartella:</label>
                 <input type="text" id="gh-img-base" value="docs/public/img/" class="border rounded px-2 py-1 text-xs w-32 font-mono focus:border-blue-500 outline-none">
             </div>
 
             <div class="flex items-center gap-2 border-l pl-4 border-gray-300">
                 <input type="checkbox" id="chk-ask-path" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                <label for="chk-ask-path" class="text-xs text-gray-700 select-none cursor-pointer">
-                    Conferma nome file
-                </label>
+                <label for="chk-ask-path" class="text-xs text-gray-700 select-none cursor-pointer">Conferma nome</label>
             </div>
             
-            <div class="ml-auto text-xs text-gray-400 font-mono">
-                Math: $V=R \cdot I$
-            </div>
+            <div class="ml-auto text-xs text-gray-400 font-mono hidden sm:block">Math: $E=mc^2$</div>
         </div>
     </header>
 
     <div id="editor-area">
         <textarea id="markdown-input" class="w-1/2 h-full p-8 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none" 
-            placeholder="Scrivi qui il tuo Markdown..."></textarea>
+            placeholder="Scrivi qui... (i tuoi dati verranno salvati nel telefono al primo inserimento)"></textarea>
         <div id="preview-output" class="w-1/2 h-full p-8 overflow-y-auto bg-gray-50 prose max-w-none"></div>
         
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
             <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
                  <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                 <span id="loading-msg" class="font-semibold text-gray-800 text-sm">Operazione in corso...</span>
+                 <span id="loading-msg" class="font-semibold text-gray-800 text-sm">Caricamento...</span>
             </div>
         </div>
     </div>
@@ -127,15 +116,36 @@
     </div>
 
     <script>
-        // --- Setup ---
+        // --- Setup Globale ---
         const input = document.getElementById('markdown-input');
         const preview = document.getElementById('preview-output');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingMsg = document.getElementById('loading-msg');
-        
         marked.setOptions({ breaks: true, gfm: true });
 
-        // --- Utils: Encode/Decode Unicode for GitHub ---
+        // --- 1. GESTIONE MEMORIA SICURA (LOCALSTORAGE) ---
+        // Al caricamento, recupera i dati salvati nel telefono/PC
+        window.addEventListener('load', () => {
+            const fields = ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'];
+            fields.forEach(id => {
+                const saved = localStorage.getItem('my_' + id);
+                if (saved) document.getElementById(id).value = saved;
+                
+                // Aggiunge un "ascoltatore": ogni volta che scrivi, salva subito
+                document.getElementById(id).addEventListener('input', (e) => {
+                    localStorage.setItem('my_' + id, e.target.value);
+                });
+            });
+
+            // Registrazione Service Worker per PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrato:', reg.scope))
+                    .catch(err => console.log('SW Errore:', err));
+            }
+        });
+
+        // --- Utils: Codifica UTF-8 ---
         function b64EncodeUnicode(str) {
             return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
                 return String.fromCharCode('0x' + p1);
@@ -147,34 +157,27 @@
             }).join(''));
         }
 
-        // --- Funzione Template ---
+        // --- Template ---
         function getFrontMatterTemplate() {
             const today = new Date().toISOString().split('T')[0];
             return `---
-title: Titolo Articolo
+title: Nuovo Articolo
 draft: false
 date: ${today}
 class_target: Tutti
 image: /img/default.jpg
 ---
 
-# Titolo Grande
+# Titolo
 
-Scrivi qui il tuo articolo...
-
-Formula inline: $E = mc^2$
-
-Formula blocco:
-$$
-x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
-$$
+Scrivi qui...
 `;
         }
 
         function prependFrontMatter() {
             const tmpl = getFrontMatterTemplate();
             if (input.value.trim().startsWith('---')) {
-                if(!confirm("C'è già un'intestazione. Aggiungo comunque?")) return;
+                if(!confirm("Intestazione già presente. Aggiungo comunque?")) return;
             }
             input.value = tmpl + input.value;
             renderPreview();
@@ -205,93 +208,67 @@ $$
             setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
         }
 
-        // --- Preview Logic con MathJax ---
+        // --- Preview Logic ---
         function renderPreview() {
             preview.innerHTML = marked.parse(input.value);
-            // Dice a MathJax di controllare il nuovo contenuto e trasformare le formule
             if (window.MathJax) {
                 MathJax.typesetPromise([preview]).catch((err) => console.log('MathJax Error:', err));
             }
         }
-        
         input.addEventListener('input', renderPreview);
-        
-        // Inizializzazione
-        if(!input.value) {
-            input.value = getFrontMatterTemplate();
-            renderPreview();
-        }
+        if(!input.value) { input.value = getFrontMatterTemplate(); renderPreview(); }
 
-        // --- LOAD FUNCTION (Nuova!) ---
+        // --- LOAD Function ---
         async function loadFromGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
             
             if (!creds.token || !path) { showStatus("Mancano dati (Token o Path)", 'error'); return; }
 
-            loadingMsg.innerText = "Caricamento file...";
+            loadingMsg.innerText = "Caricamento...";
             loadingOverlay.classList.remove('hidden');
 
             try {
-                // Aggiungiamo un timestamp per evitare che il browser usi una versione vecchia (cache)
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
-                
                 const resp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
                 
-                if (resp.status === 404) {
-                    throw new Error("File non trovato. Controlla il percorso.");
-                }
+                if (resp.status === 404) throw new Error("File non trovato.");
                 if (!resp.ok) throw new Error("Errore GitHub: " + resp.status);
 
                 const data = await resp.json();
-                
-                // Decodifica corretta per accenti italiani
-                const content = b64DecodeUnicode(data.content);
-                
-                input.value = content;
+                input.value = b64DecodeUnicode(data.content);
                 renderPreview();
-                showStatus("File caricato correttamente!");
+                showStatus("File caricato!");
 
-            } catch (err) {
-                console.error(err);
-                showStatus("Errore Load: " + err.message, 'error');
-            } finally {
-                loadingOverlay.classList.add('hidden');
-            }
+            } catch (err) { showStatus(err.message, 'error'); } 
+            finally { loadingOverlay.classList.add('hidden'); }
         }
 
-        // --- SAVE FUNCTION (Aggiornata con codifica corretta) ---
+        // --- SAVE Function ---
         async function syncTextToGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
-            
             if (!creds.token || !path) { showStatus("Mancano dati", 'error'); return; }
 
             const btn = document.getElementById('save-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<span>Salvataggio...</span>`;
+            const originalText = btn.innerText;
+            btn.innerText = "Salvataggio...";
             btn.disabled = true;
 
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
                 let sha = null;
-                
-                // 1. Cerchiamo se il file esiste per prendere lo SHA (serve per aggiornare)
                 try {
                     const getResp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
                     if (getResp.ok) sha = (await getResp.json()).sha;
                 } catch(e) {}
 
-                // 2. Codifichiamo il contenuto (supporta emoji e accenti)
-                const contentEncoded = b64EncodeUnicode(input.value);
-                
                 const body = { 
                     message: sha ? `Update ${path}` : `Create ${path}`, 
-                    content: contentEncoded 
+                    content: b64EncodeUnicode(input.value) 
                 };
                 if (sha) body.sha = sha;
 
-                // 3. Inviamo
                 const putResp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
@@ -299,15 +276,10 @@ $$
                 });
 
                 if (!putResp.ok) throw new Error((await putResp.json()).message);
-                
-                showStatus("Salvato con successo su GitHub!");
+                showStatus("Salvato con successo!");
 
-            } catch (err) {
-                showStatus("Errore Save: " + err.message, 'error');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
+            } catch (err) { showStatus("Errore Save: " + err.message, 'error'); } 
+            finally { btn.innerText = originalText; btn.disabled = false; }
         }
 
         // --- DRAG & DROP IMAGES ---
@@ -319,32 +291,26 @@ $$
             e.preventDefault();
             input.classList.remove('dragging');
             const files = e.dataTransfer.files;
-            
             if (files.length === 0 || !files[0].type.startsWith('image/')) {
-                showStatus("Trascina un file immagine valido.", 'error');
-                return;
+                showStatus("Trascina un'immagine valida.", 'error'); return;
             }
             await uploadImage(files[0]);
         }
 
         async function uploadImage(file) {
             const creds = getCreds();
-            if (!creds.token) { showStatus("Manca il Token GitHub.", 'error'); return; }
-
+            if (!creds.token) { showStatus("Manca il Token.", 'error'); return; }
+            
             const baseFolder = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            // Pulisce il nome file da spazi e caratteri strani
             const cleanName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
             let targetPath = baseFolder + cleanName;
 
-            const askConfirmation = document.getElementById('chk-ask-path').checked;
-            if (askConfirmation) {
-                const userPath = prompt("Percorso file su GitHub:", targetPath);
-                if (userPath === null) return;
+            if (document.getElementById('chk-ask-path').checked) {
+                const userPath = prompt("Percorso su GitHub:", targetPath);
+                if (!userPath) return;
                 targetPath = userPath.trim();
             } else {
-                // Se non chiede conferma, aggiunge timestamp per evitare sovrascritture accidentali
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                targetPath = `${baseFolder}${timestamp}_${cleanName}`;
+                targetPath = `${baseFolder}${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${cleanName}`;
             }
 
             loadingMsg.innerText = "Upload Immagine...";
@@ -353,61 +319,28 @@ $$
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 let binary = '';
-                const bytes = new Uint8Array(arrayBuffer);
-                for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-                const base64Content = btoa(binary);
-
+                new Uint8Array(arrayBuffer).forEach((b) => binary += String.fromCharCode(b));
+                
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${targetPath}`;
-                
-                const body = { message: `Upload img ${targetPath}`, content: base64Content };
-                
                 const resp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({ message: `Upload img`, content: btoa(binary) })
                 });
 
-                if (!resp.ok) throw new Error("Errore Upload Img");
-                const data = await resp.json();
+                if (!resp.ok) throw new Error("Errore Upload");
                 
-                // Inserisce il link Markdown
-                const downloadUrl = data.content.download_url;
-                // Usiamo il percorso relativo che è meglio per VitePress
                 const relativePath = '/' + targetPath.replace('docs/public/', ''); 
-                
-                // VitePress preferisce percorsi assoluti dalla root public
                 const mdImage = `\n![${file.name}](${relativePath})\n`;
                 
-                // Inserisce il testo dove c'è il cursore
-                if (input.selectionStart || input.selectionStart == '0') {
-                    const start = input.selectionStart;
-                    const end = input.selectionEnd;
-                    input.value = input.value.substring(0, start) + mdImage + input.value.substring(end);
-                    input.selectionStart = input.selectionEnd = start + mdImage.length;
-                } else {
-                    input.value += mdImage;
-                }
-                
-                renderPreview(); // Aggiorna preview con immagine
-                showStatus(`Immagine caricata: ${targetPath}`);
+                const start = input.selectionStart;
+                input.value = input.value.substring(0, start) + mdImage + input.value.substring(input.selectionEnd);
+                renderPreview();
+                showStatus(`Immagine caricata!`);
 
-            } catch (err) {
-                console.error(err);
-                showStatus("Errore Upload: " + err.message, 'error');
-            } finally {
-                loadingOverlay.classList.add('hidden');
-            }
+            } catch (err) { showStatus("Errore Upload: " + err.message, 'error'); } 
+            finally { loadingOverlay.classList.add('hidden'); }
         }
     </script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('App pronta offline!', reg.scope))
-                .catch(err => console.log('Errore SW:', err));
-        });
-    }
-</script>
-</body>    
 </body>
 </html>
