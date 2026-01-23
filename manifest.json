@@ -1,7 +1,7 @@
 {
   "name": "Proflama Editor",
   "short_name": "Editor",
-  "start_url": "./editor.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
