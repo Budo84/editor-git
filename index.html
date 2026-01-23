@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Proflama Editor</title>
-    <meta name="description" content="Editor Markdown per Proflama. Scrivi articoli e gestisci il blog direttamente da browser.">
-    <meta name="robots" content="noindex, nofollow"> <link rel="manifest" href="manifest.json">
+    <meta name="description" content="Editor Markdown per Proflama. Scrivi, modifica ed elimina articoli direttamente da browser.">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     <meta name="theme-color" content="#3b82f6">
@@ -61,11 +63,19 @@
                 <label class="text-[10px] font-bold text-gray-400 uppercase">File Path</label>
                 <div class="flex">
                     <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono">
-                    <button onclick="loadFromGitHub()" id="load-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 text-xs font-bold border-l border-slate-600 rounded-r">📂</button>
+                    <button onclick="loadFromGitHub()" id="load-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 text-xs font-bold border-l border-slate-600 rounded-r" title="Carica File">📂</button>
                 </div>
             </div>
             
-            <button onclick="syncTextToGitHub()" id="save-btn" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">Salva MD</button>
+            <div class="ml-auto flex items-center gap-2">
+                <button onclick="deleteFile()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded shadow-sm text-xs font-bold transition" title="Elimina File">
+                    🗑️
+                </button>
+                
+                <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">
+                    Salva MD
+                </button>
+            </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded border border-dashed border-gray-300">
@@ -82,7 +92,7 @@
     </header>
 
     <div id="editor-area">
-        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Scrivi qui..."></textarea>
+        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Scrivi qui... (Trascina immagini o video MP4 per caricarli)"></textarea>
         <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
         
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
@@ -106,7 +116,7 @@
         const loadingMsg = document.getElementById('loading-msg');
         marked.setOptions({ breaks: true, gfm: true });
 
-        // 1. LOCALSTORAGE & PWA
+        // 1. LOCALSTORAGE
         window.addEventListener('load', () => {
             ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
@@ -117,14 +127,29 @@
         });
 
         // 2. UTILS
-        function b64EncodeUnicode(str) {
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))); }
+        function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+        function getCreds() {
+            return {
+                token: document.getElementById('gh-token').value.trim(),
+                owner: document.getElementById('gh-owner').value.trim(),
+                repo: document.getElementById('gh-repo').value.trim()
+            };
         }
-        function b64DecodeUnicode(str) {
-            return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        function showStatus(msg, type = 'success') {
+            const el = document.getElementById('status-msg');
+            const icon = document.getElementById('status-icon');
+            const text = document.getElementById('status-text');
+            text.innerText = msg;
+            el.firstElementChild.className = type === 'error' 
+                ? "bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium" 
+                : "bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium";
+            icon.innerHTML = type === 'error' ? '⚠️' : '✅';
+            el.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
         }
 
-        // 3. TEMPLATE (CON DESCRIPTION PER GOOGLE)
+        // 3. TEMPLATE
         function getFrontMatterTemplate() {
             const today = new Date().toISOString().split('T')[0];
             return `---
@@ -142,41 +167,13 @@ image: /img/default.jpg
 Scrivi qui il tuo articolo...
 `;
         }
-
         function prependFrontMatter() {
-            const tmpl = getFrontMatterTemplate();
             if (input.value.trim().startsWith('---') && !confirm("Intestazione già presente. Aggiungo comunque?")) return;
-            input.value = tmpl + input.value;
+            input.value = getFrontMatterTemplate() + input.value;
             renderPreview();
         }
 
-        // 4. API GITHUB
-        function getCreds() {
-            return {
-                token: document.getElementById('gh-token').value.trim(),
-                owner: document.getElementById('gh-owner').value.trim(),
-                repo: document.getElementById('gh-repo').value.trim()
-            };
-        }
-
-        function showStatus(msg, type = 'success') {
-            const el = document.getElementById('status-msg');
-            const icon = document.getElementById('status-icon');
-            const text = document.getElementById('status-text');
-            text.innerText = msg;
-            
-            if (type === 'error') {
-                el.firstElementChild.className = "bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium";
-                icon.innerHTML = '⚠️';
-            } else {
-                el.firstElementChild.className = "bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium";
-                icon.innerHTML = '✅';
-            }
-            el.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
-        }
-
-        // 5. RENDER
+        // 4. PREVIEW
         function renderPreview() {
             preview.innerHTML = marked.parse(input.value);
             if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
@@ -184,28 +181,25 @@ Scrivi qui il tuo articolo...
         input.addEventListener('input', renderPreview);
         if(!input.value) { input.value = getFrontMatterTemplate(); renderPreview(); }
 
-        // 6. LOAD
+        // 5. LOAD
         async function loadFromGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
             if (!creds.token || !path) { showStatus("Mancano dati", 'error'); return; }
 
-            loadingMsg.innerText = "Scarico il file...";
-            loadingOverlay.classList.remove('hidden');
-
+            loadingMsg.innerText = "Scarico il file..."; loadingOverlay.classList.remove('hidden');
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
                 const resp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!resp.ok) throw new Error("Errore GitHub: " + resp.status);
-                const data = await resp.json();
-                input.value = b64DecodeUnicode(data.content);
+                if (!resp.ok) throw new Error("Errore: " + resp.status);
+                input.value = b64DecodeUnicode((await resp.json()).content);
                 renderPreview();
                 showStatus("File caricato!");
             } catch (err) { showStatus(err.message, 'error'); } 
             finally { loadingOverlay.classList.add('hidden'); }
         }
 
-        // 7. SAVE
+        // 6. SAVE
         async function syncTextToGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
@@ -213,30 +207,59 @@ Scrivi qui il tuo articolo...
 
             const btn = document.getElementById('save-btn');
             btn.innerText = "⏳..."; btn.disabled = true;
-
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
                 let sha = null;
                 try {
-                    const getResp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                    if (getResp.ok) sha = (await getResp.json()).sha;
+                    const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                    if (r.ok) sha = (await r.json()).sha;
                 } catch(e) {}
 
-                const body = { 
-                    message: sha ? `Update ${path}` : `Create ${path}`, 
-                    content: b64EncodeUnicode(input.value) 
-                };
+                const body = { message: sha ? `Update ${path}` : `Create ${path}`, content: b64EncodeUnicode(input.value) };
                 if (sha) body.sha = sha;
 
-                const putResp = await fetch(url, {
+                const resp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if (!putResp.ok) throw new Error((await putResp.json()).message);
+                if (!resp.ok) throw new Error((await resp.json()).message);
                 showStatus("Salvato!");
             } catch (err) { showStatus(err.message, 'error'); } 
             finally { btn.innerText = "Salva MD"; btn.disabled = false; }
+        }
+
+        // 7. DELETE (NUOVO)
+        async function deleteFile() {
+            const creds = getCreds();
+            const path = document.getElementById('gh-path').value.trim();
+            if (!creds.token || !path) { showStatus("Carica prima un file!", 'error'); return; }
+
+            if (!confirm("SEI SICURO?\nQuesta azione eliminerà definitivamente: " + path)) return;
+            
+            loadingMsg.innerText = "Eliminazione..."; loadingOverlay.classList.remove('hidden');
+            try {
+                // Serve SHA per eliminare
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
+                const getResp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                if (!getResp.ok) throw new Error("File non trovato o errore lettura.");
+                
+                const sha = (await getResp.json()).sha;
+
+                const delResp = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Delete ${path}`, sha: sha })
+                });
+
+                if (!delResp.ok) throw new Error("Errore durante l'eliminazione.");
+                
+                input.value = getFrontMatterTemplate();
+                document.getElementById('gh-path').value = '';
+                renderPreview();
+                showStatus("File eliminato! 🗑️");
+            } catch (err) { showStatus(err.message, 'error'); }
+            finally { loadingOverlay.classList.add('hidden'); }
         }
 
         // 8. DRAG & DROP
@@ -246,7 +269,7 @@ Scrivi qui il tuo articolo...
             e.preventDefault(); input.classList.remove('dragging');
             const f = e.dataTransfer.files[0];
             if (f && (f.type.startsWith('image/') || f.type.startsWith('video/'))) await uploadMedia(f);
-            else showStatus("Solo immagini o video!", 'error');
+            else showStatus("Solo img/video!", 'error');
         });
 
         async function uploadMedia(file) {
@@ -258,11 +281,9 @@ Scrivi qui il tuo articolo...
             let target = base + (document.getElementById('chk-ask-path').checked ? (prompt("Nome file:", name) || name) : `${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${name}`);
 
             loadingMsg.innerText = "Upload..."; loadingOverlay.classList.remove('hidden');
-
             try {
                 const buf = await file.arrayBuffer();
                 let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
-                
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
                 const resp = await fetch(url, {
                     method: 'PUT',
