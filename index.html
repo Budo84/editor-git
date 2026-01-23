@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <title>Proflama Editor - Scrivi e Pubblica su GitHub</title>
-    <meta name="description" content="Editor Markdown professionale per il blog Proflama. Scrivi articoli, gestisci metadati e carica immagini o video MP4 direttamente sulla repository GitHub.">
+    <title>Proflama Editor</title>
+    <meta name="description" content="Editor Markdown per Proflama. Scrivi articoli e gestisci il blog direttamente da browser.">
     <meta name="robots" content="noindex, nofollow"> <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -16,10 +16,7 @@
     
     <script>
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
             svg: { fontCache: 'global' }
         };
     </script>
@@ -27,15 +24,11 @@
 
     <style>
         body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Area Editor Divisa */
         #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
-        
-        /* Drag & Drop Effect */
         textarea.dragging { border: 4px dashed #3b82f6; background-color: #eff6ff; }
         textarea { resize: none; outline: none; transition: all 0.2s; }
         
-        /* Stili Anteprima (Markdown renderizzato) */
+        /* Preview Styles */
         .prose { padding-bottom: 3rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
         .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
@@ -55,68 +48,46 @@
 <body class="bg-gray-50 text-gray-800 font-sans">
 
     <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
-        
         <div class="flex flex-wrap gap-2 items-end">
-            <button onclick="prependFrontMatter()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold mr-2 border border-gray-300 transition" title="Inserisci intestazione automatica">
+            <button onclick="prependFrontMatter()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded shadow-sm text-xs font-bold mr-2 border border-gray-300 transition">
                 + Metadata
             </button>
 
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Token</label>
-                <input type="password" id="gh-token" placeholder="ghp_..." class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none transition">
-            </div>
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">User</label>
-                <input type="text" id="gh-owner" placeholder="user" class="border rounded px-2 py-1 text-sm w-20 focus:border-blue-500 outline-none transition">
-            </div>
-            <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Repo</label>
-                <input type="text" id="gh-repo" placeholder="repo" class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none transition">
-            </div>
+            <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase">Token</label><input type="password" id="gh-token" placeholder="ghp_..." class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none transition"></div>
+            <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase">User</label><input type="text" id="gh-owner" placeholder="user" class="border rounded px-2 py-1 text-sm w-20 focus:border-blue-500 outline-none transition"></div>
+            <div class="flex flex-col"><label class="text-[10px] font-bold text-gray-400 uppercase">Repo</label><input type="text" id="gh-repo" placeholder="repo" class="border rounded px-2 py-1 text-sm w-24 focus:border-blue-500 outline-none transition"></div>
             
             <div class="flex flex-col flex-grow md:flex-grow-0 relative">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">File Path</label>
+                <label class="text-[10px] font-bold text-gray-400 uppercase">File Path</label>
                 <div class="flex">
                     <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono">
-                    <button onclick="loadFromGitHub()" id="load-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 text-xs font-bold border-l border-slate-600 rounded-r" title="Carica file esistente">
-                        📂
-                    </button>
+                    <button onclick="loadFromGitHub()" id="load-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 text-xs font-bold border-l border-slate-600 rounded-r">📂</button>
                 </div>
             </div>
             
-            <button onclick="syncTextToGitHub()" id="save-btn" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">
-                Salva MD
-            </button>
+            <button onclick="syncTextToGitHub()" id="save-btn" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition flex items-center gap-2">Salva MD</button>
         </div>
 
         <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-2 rounded border border-dashed border-gray-300">
             <span class="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">📷 Foto/Video</span>
-            
             <div class="flex items-center gap-2">
                 <input type="text" id="gh-img-base" value="docs/public/img/" class="border rounded px-2 py-1 text-xs w-32 font-mono focus:border-blue-500 outline-none">
             </div>
-
             <div class="flex items-center gap-2 border-l pl-4 border-gray-300">
                 <input type="checkbox" id="chk-ask-path" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                <label for="chk-ask-path" class="text-xs text-gray-700 select-none cursor-pointer">Chiedi nome file</label>
+                <label for="chk-ask-path" class="text-xs text-gray-700 select-none cursor-pointer">Chiedi nome</label>
             </div>
-            
             <div class="ml-auto text-xs text-gray-400 font-mono hidden sm:block">Math: $E=mc^2$</div>
         </div>
     </header>
 
     <div id="editor-area">
-        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" 
-            placeholder="Scrivi qui... (Trascina immagini o video MP4 per caricarli automaticamente)"></textarea>
-            
+        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Scrivi qui..."></textarea>
         <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
         
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
             <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
-                 <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                 </svg>
+                 <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                  <span id="loading-msg" class="font-semibold text-gray-800 text-sm">Elaborazione...</span>
             </div>
         </div>
@@ -124,58 +95,41 @@
 
     <div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
         <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium">
-            <span id="status-icon"></span>
-            <span id="status-text">Messaggio</span>
+            <span id="status-icon"></span><span id="status-text">Messaggio</span>
         </div>
     </div>
 
     <script>
-        // --- Setup Globale ---
         const input = document.getElementById('markdown-input');
         const preview = document.getElementById('preview-output');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingMsg = document.getElementById('loading-msg');
-        
-        // Configura Marked
         marked.setOptions({ breaks: true, gfm: true });
 
-        // --- 1. MEMORIA SICURA (LOCALSTORAGE) ---
+        // 1. LOCALSTORAGE & PWA
         window.addEventListener('load', () => {
-            const fields = ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'];
-            fields.forEach(id => {
+            ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
                 if (saved) document.getElementById(id).value = saved;
-                
-                document.getElementById(id).addEventListener('input', (e) => {
-                    localStorage.setItem('my_' + id, e.target.value);
-                });
+                document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
             });
-
-            // Registra Service Worker (PWA)
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW OK:', reg.scope))
-                    .catch(err => console.log('SW Fail:', err));
-            }
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.log);
         });
 
-        // --- Utils: Codifica/Decodifica UTF-8 ---
+        // 2. UTILS
         function b64EncodeUnicode(str) {
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
         }
         function b64DecodeUnicode(str) {
-            return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
+            return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
         }
 
-        // --- 2. FRONTMATTER TEMPLATE ---
+        // 3. TEMPLATE (CON DESCRIPTION PER GOOGLE)
         function getFrontMatterTemplate() {
             const today = new Date().toISOString().split('T')[0];
             return `---
 title: Nuovo Articolo
+description: Scrivi qui una breve sintesi per Google (max 160 caratteri)...
 draft: false
 date: ${today}
 category: Arduino
@@ -191,14 +145,12 @@ Scrivi qui il tuo articolo...
 
         function prependFrontMatter() {
             const tmpl = getFrontMatterTemplate();
-            if (input.value.trim().startsWith('---')) {
-                if(!confirm("C'è già un'intestazione. Ne aggiungo un'altra?")) return;
-            }
+            if (input.value.trim().startsWith('---') && !confirm("Intestazione già presente. Aggiungo comunque?")) return;
             input.value = tmpl + input.value;
             renderPreview();
         }
 
-        // --- 3. API GITHUB ---
+        // 4. API GITHUB
         function getCreds() {
             return {
                 token: document.getElementById('gh-token').value.trim(),
@@ -224,60 +176,46 @@ Scrivi qui il tuo articolo...
             setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
         }
 
-        // --- 4. ANTEPRIMA ---
+        // 5. RENDER
         function renderPreview() {
             preview.innerHTML = marked.parse(input.value);
-            // Render Formule Matematiche
-            if (window.MathJax) {
-                MathJax.typesetPromise([preview]).catch((err) => console.log('MathJax Error:', err));
-            }
+            if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
         }
         input.addEventListener('input', renderPreview);
-        // Init
         if(!input.value) { input.value = getFrontMatterTemplate(); renderPreview(); }
 
-        // --- 5. CARICAMENTO FILE ---
+        // 6. LOAD
         async function loadFromGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
-            
-            if (!creds.token || !path) { showStatus("Inserisci Token e Percorso File", 'error'); return; }
+            if (!creds.token || !path) { showStatus("Mancano dati", 'error'); return; }
 
             loadingMsg.innerText = "Scarico il file...";
             loadingOverlay.classList.remove('hidden');
 
             try {
-                // Aggiungiamo timestamp per evitare la cache
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
                 const resp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                
-                if (resp.status === 404) throw new Error("File non trovato.");
                 if (!resp.ok) throw new Error("Errore GitHub: " + resp.status);
-
                 const data = await resp.json();
                 input.value = b64DecodeUnicode(data.content);
                 renderPreview();
-                showStatus("File caricato con successo!");
-
+                showStatus("File caricato!");
             } catch (err) { showStatus(err.message, 'error'); } 
             finally { loadingOverlay.classList.add('hidden'); }
         }
 
-        // --- 6. SALVATAGGIO FILE ---
+        // 7. SAVE
         async function syncTextToGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token || !path) { showStatus("Mancano dati per il salvataggio", 'error'); return; }
+            if (!creds.token || !path) { showStatus("Mancano dati", 'error'); return; }
 
             const btn = document.getElementById('save-btn');
-            const originalText = btn.innerText;
-            btn.innerText = "⏳...";
-            btn.disabled = true;
+            btn.innerText = "⏳..."; btn.disabled = true;
 
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
-                
-                // Prima otteniamo l'SHA se il file esiste (per fare update)
                 let sha = null;
                 try {
                     const getResp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
@@ -295,93 +233,52 @@ Scrivi qui il tuo articolo...
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-
                 if (!putResp.ok) throw new Error((await putResp.json()).message);
-                showStatus("Salvato correttamente!");
-
-            } catch (err) { showStatus("Errore Salvataggio: " + err.message, 'error'); } 
-            finally { btn.innerText = originalText; btn.disabled = false; }
+                showStatus("Salvato!");
+            } catch (err) { showStatus(err.message, 'error'); } 
+            finally { btn.innerText = "Salva MD"; btn.disabled = false; }
         }
 
-        // --- 7. DRAG & DROP (IMMAGINI & VIDEO MP4) ---
+        // 8. DRAG & DROP
         input.addEventListener('dragover', (e) => { e.preventDefault(); input.classList.add('dragging'); });
         input.addEventListener('dragleave', () => input.classList.remove('dragging'));
-        input.addEventListener('drop', handleDrop);
-
-        async function handleDrop(e) {
-            e.preventDefault();
-            input.classList.remove('dragging');
-            const files = e.dataTransfer.files;
-            
-            // Accetta solo Immagini e Video
-            if (files.length === 0 || (!files[0].type.startsWith('image/') && !files[0].type.startsWith('video/'))) {
-                showStatus("Puoi trascinare solo Immagini o Video.", 'error'); return;
-            }
-            await uploadMedia(files[0]);
-        }
+        input.addEventListener('drop', async (e) => {
+            e.preventDefault(); input.classList.remove('dragging');
+            const f = e.dataTransfer.files[0];
+            if (f && (f.type.startsWith('image/') || f.type.startsWith('video/'))) await uploadMedia(f);
+            else showStatus("Solo immagini o video!", 'error');
+        });
 
         async function uploadMedia(file) {
             const creds = getCreds();
-            if (!creds.token) { showStatus("Inserisci prima il Token GitHub.", 'error'); return; }
+            if (!creds.token) { showStatus("Manca Token", 'error'); return; }
             
-            // Preparazione percorso
-            const baseFolder = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            // Pulisce il nome file da spazi e caratteri strani
-            const cleanName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-            let targetPath = baseFolder + cleanName;
+            let base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
+            let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+            let target = base + (document.getElementById('chk-ask-path').checked ? (prompt("Nome file:", name) || name) : `${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${name}`);
 
-            // Chiede conferma nome se spuntato
-            if (document.getElementById('chk-ask-path').checked) {
-                const userPath = prompt("Percorso destinazione su GitHub:", targetPath);
-                if (!userPath) return;
-                targetPath = userPath.trim();
-            } else {
-                // Aggiunge timestamp per evitare conflitti se non chiediamo conferma
-                targetPath = `${baseFolder}${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${cleanName}`;
-            }
-
-            loadingMsg.innerText = "Caricamento media in corso...";
-            loadingOverlay.classList.remove('hidden');
+            loadingMsg.innerText = "Upload..."; loadingOverlay.classList.remove('hidden');
 
             try {
-                // Lettura file come binario
-                const arrayBuffer = await file.arrayBuffer();
-                let binary = '';
-                new Uint8Array(arrayBuffer).forEach((b) => binary += String.fromCharCode(b));
+                const buf = await file.arrayBuffer();
+                let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
                 
-                // Upload a GitHub
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${targetPath}`;
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
                 const resp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Upload media: ${cleanName}`, content: btoa(binary) })
+                    body: JSON.stringify({ message: `Upload media`, content: btoa(bin) })
                 });
-
-                if (!resp.ok) throw new Error("Errore Upload su GitHub");
+                if (!resp.ok) throw new Error("Errore Upload");
                 
-                // Calcolo percorso relativo per il markdown
-                // Se la cartella è 'docs/public/img', nel sito diventa '/img'
-                const relativePath = '/' + targetPath.replace('docs/public/', ''); 
+                const relPath = '/' + target.replace('docs/public/', ''); 
+                let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${file.name}](${relPath})\n`;
                 
-                // --- LOGICA INTELLIGENTE: Video vs Immagine ---
-                let mdContent = '';
-                if (file.type.startsWith('video/')) {
-                    // Crea il tag video "simil-GIF" (Loop, Muto, Autoplay)
-                    mdContent = `\n<video src="${relativePath}" autoplay loop muted playsinline width="100%"></video>\n`;
-                } else {
-                    // Crea il tag immagine standard Markdown
-                    mdContent = `\n![${file.name}](${relativePath})\n`;
-                }
-                
-                // Inserimento nel punto del cursore
-                const start = input.selectionStart;
-                const end = input.selectionEnd;
-                input.value = input.value.substring(0, start) + mdContent + input.value.substring(end);
-                
+                const s = input.selectionStart;
+                input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview();
-                showStatus(`Media caricato!`);
-
-            } catch (err) { showStatus("Errore Upload: " + err.message, 'error'); } 
+                showStatus("Media caricato!");
+            } catch (err) { showStatus(err.message, 'error'); } 
             finally { loadingOverlay.classList.add('hidden'); }
         }
     </script>
