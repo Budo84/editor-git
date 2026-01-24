@@ -60,7 +60,7 @@
 
             <div class="flex flex-col flex-grow md:flex-grow-0 relative ml-auto sm:ml-2">
                 <div class="flex">
-                    <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-64 focus:border-blue-500 outline-none font-mono bg-gray-50">
+                    <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-64 focus:border-blue-500 outline-none font-mono bg-gray-50">
                     <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File esistente">📂</button>
                 </div>
             </div>
@@ -239,7 +239,7 @@
         function autoUpdateFilename() {
             const title = document.getElementById('meta-title').value;
             const slug = title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
-            const fullPath = `docs/posts/${slug}.md`;
+            const fullPath = `docs/blog/${slug}.md`;
             document.getElementById('gh-path').value = fullPath;
             localStorage.setItem('my_gh-path', fullPath);
         }
