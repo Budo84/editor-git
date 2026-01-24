@@ -37,8 +37,23 @@
         /* Preview Styles */
         .prose { padding-bottom: 3rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
+        .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
+        .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose p { margin-bottom: 1em; line-height: 1.6; }
+        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
+        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
+        .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
+        .prose pre code { background-color: transparent; color: inherit; padding: 0; }
         .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .prose a { color: #2563eb; text-decoration: underline; }
+        mjx-container { outline: none !important; }
+
+        /* Toolbar Button Style */
+        .fmt-btn {
+            @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px];
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
@@ -143,8 +158,32 @@
     </div>
 
     <div id="editor-area">
-        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia a scrivere..."></textarea>
+        <div class="w-1/2 h-full flex flex-col border-r bg-white">
+            
+            <div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
+                <button onclick="fmt('**', '**')" class="fmt-btn font-bold" title="Grassetto">B</button>
+                <button onclick="fmt('*', '*')" class="fmt-btn italic" title="Corsivo">I</button>
+                <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                <button onclick="fmt('# ', '')" class="fmt-btn" title="Titolo 1">H1</button>
+                <button onclick="fmt('## ', '')" class="fmt-btn" title="Titolo 2">H2</button>
+                <button onclick="fmt('### ', '')" class="fmt-btn" title="Titolo 3">H3</button>
+                <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                <button onclick="fmt('- ', '')" class="fmt-btn" title="Elenco puntato">List</button>
+                <button onclick="fmt('1. ', '')" class="fmt-btn" title="Elenco numerato">1.</button>
+                <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                <button onclick="fmt('[', '](url)')" class="fmt-btn" title="Link">🔗</button>
+                <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Codice">Code</button>
+                <button onclick="fmt('```\n', '\n```')" class="fmt-btn font-mono" title="Blocco Codice">{ }</button>
+                <button onclick="fmt('> ', '')" class="fmt-btn" title="Citazione">""</button>
+                <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                <button onclick="fmt('\n---\n', '')" class="fmt-btn" title="Separatore">HR</button>
+            </div>
+
+            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia a scrivere..."></textarea>
+        </div>
+
         <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
             <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
                  <svg class="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -189,6 +228,37 @@
         function loading(show, msg="") {
             const el = document.getElementById('loading-overlay');
             if(show) { document.getElementById('loading-msg').innerText = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
+        }
+
+        // --- FORMATTING TOOLBAR FUNCTION ---
+        function fmt(startTag, endTag) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            const selectedText = text.substring(start, end);
+            
+            // Inserisci i tag attorno al testo (o inserisci tag vuoti se nulla è selezionato)
+            const newText = startTag + selectedText + endTag;
+            
+            input.value = text.substring(0, start) + newText + text.substring(end);
+            
+            // Riposiziona il cursore
+            input.focus();
+            if (selectedText.length > 0) {
+                // Se c'era testo selezionato, seleziona tutto il blocco nuovo (incluso tag)
+                // input.selectionStart = start; 
+                // input.selectionEnd = start + newText.length;
+                // OPPURE: Posiziona cursore alla fine
+                 input.selectionStart = start + newText.length;
+                 input.selectionEnd = start + newText.length;
+            } else {
+                // Se non c'era testo, metti il cursore in mezzo ai tag (es. **|**)
+                input.selectionStart = start + startTag.length;
+                input.selectionEnd = start + startTag.length;
+            }
+            
+            // Aggiorna anteprima
+            renderPreview();
         }
 
         // --- 1. METADATA ---
@@ -307,18 +377,17 @@ Scrivi qui...`;
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
-        // --- 4. FILE MANAGER (LOGICA COMPLESSA) ---
+        // --- 4. FILE MANAGER ---
         let currentFmPath = '';
 
         function openFileManager() {
-            // Usa il percorso delle immagini o root se vuoto
             let startPath = document.getElementById('gh-img-base').value.trim() || '';
             fmNavigate(startPath);
             openModal('file-modal');
         }
 
         async function fmNavigate(path) {
-            path = path.replace(/^\/|\/$/g, ''); // Pulisce slash iniziali/finali
+            path = path.replace(/^\/|\/$/g, '');
             currentFmPath = path;
             document.getElementById('fm-path').value = path;
             
@@ -334,7 +403,6 @@ Scrivi qui...`;
                 const data = await res.json();
                 if(!Array.isArray(data)) throw new Error("Questo non è un elenco di file");
 
-                // Ordina: Cartelle prima, poi file
                 data.sort((a, b) => (a.type === b.type) ? 0 : (a.type === 'dir' ? -1 : 1));
 
                 listEl.innerHTML = '';
@@ -375,7 +443,6 @@ Scrivi qui...`;
         function fmRefresh() { fmNavigate(currentFmPath); }
 
         function fmSelectFile(path) {
-            // Se clicco un file, decido se caricarlo nell'editor o impostarlo come img path
             if(path.endsWith('.md')) {
                 if(confirm("Vuoi aprire questo file nell'editor?")) {
                     document.getElementById('gh-path').value = path;
@@ -390,22 +457,18 @@ Scrivi qui...`;
         async function fmCreateFolder() {
             const name = prompt("Nome Nuova Cartella:");
             if (!name) return;
-            
-            // Crea un file .keep dentro la nuova cartella
             const creds = getCreds();
             const cleanName = name.replace(/[^a-zA-Z0-9._-]/g, '');
             const newPath = (currentFmPath ? currentFmPath + '/' : '') + cleanName + '/.keep';
-            
             loading(true, "Creo cartella...");
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
                 await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Create folder ${cleanName}`, content: "" }) // Content vuoto base64
+                    body: JSON.stringify({ message: `Create folder ${cleanName}`, content: "" })
                 });
-                fmRefresh();
-                showStatus("Cartella Creata!");
+                fmRefresh(); showStatus("Cartella Creata!");
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
@@ -420,51 +483,36 @@ Scrivi qui...`;
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `Delete ${path}`, sha: sha })
                 });
-                fmRefresh();
-                showStatus("Eliminato!");
+                fmRefresh(); showStatus("Eliminato!");
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
         async function fmRename(oldPath, sha, type) {
-            if(type === 'dir') return alert("Non puoi rinominare intere cartelle da qui (troppo rischioso). Crea una nuova cartella e sposta i file.");
-            
+            if(type === 'dir') return alert("Non puoi rinominare cartelle.");
             const newName = prompt("Nuovo nome (con estensione):", oldPath.split('/').pop());
             if(!newName || newName === oldPath.split('/').pop()) return;
-            
-            // Logica Rinomina GitHub: 1. GET content -> 2. PUT new path -> 3. DELETE old path
             const creds = getCreds();
             const parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
             const newPath = (parent ? parent + '/' : '') + newName;
-
-            loading(true, "Rinomino (Copia + Cancella)...");
+            loading(true, "Rinomino...");
             try {
-                // 1. Scarica contenuto vecchio
                 const getUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
                 const getRes = await fetch(getUrl, { headers: { 'Authorization': `token ${creds.token}` } });
-                if(!getRes.ok) throw new Error("Errore lettura file originale");
                 const data = await getRes.json();
-
-                // 2. Crea file nuovo
                 const putUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
-                const putRes = await fetch(putUrl, {
+                await fetch(putUrl, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Rename ${oldPath} to ${newPath}`, content: data.content }) // Usa lo stesso content base64
+                    body: JSON.stringify({ message: `Rename ${oldPath} to ${newPath}`, content: data.content })
                 });
-                if(!putRes.ok) throw new Error("Errore creazione nuovo file");
-
-                // 3. Cancella vecchio
                 const delUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
                 await fetch(delUrl, {
                     method: 'DELETE',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `Delete old file after rename`, sha: sha })
                 });
-
-                fmRefresh();
-                showStatus("Rinominato!");
-
-            } catch(e) { showStatus("Errore Rinomina: " + e.message, 'error'); } finally { loading(false); }
+                fmRefresh(); showStatus("Rinominato!");
+            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
     </script>
 </body>
