@@ -59,34 +59,40 @@
 <body class="bg-gray-50 text-gray-800 font-sans">
 
     <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
-        <div class="flex flex-wrap gap-2 items-center">
+        <div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
             
-            <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">
-                🛠️ Tools
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">
+                    🛠️
+                </a>
 
-            <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">
-                📝 Intestazione
+                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">
+                    📝 <span class="hidden sm:inline">Dati</span>
+                </button>
+
+                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">
+                    📷 <span class="hidden sm:inline">Media</span>
+                </button>
+
+                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition">
+                    📂 <span class="hidden sm:inline">File</span>
+                </button>
+            </div>
+
+            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 hover:bg-purple-200 transition ml-auto">
+                👁️ Anteprima
             </button>
 
-            <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">
-                📷 Carica Media
-            </button>
-
-            <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition flex items-center gap-1">
-                📂 Gestione File
-            </button>
-
-            <div class="flex flex-col flex-grow md:flex-grow-0 relative ml-auto sm:ml-2">
+            <div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
                 <div class="flex">
-                    <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
+                    <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
                     <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File">📂</button>
                 </div>
             </div>
             
-            <div class="flex items-center gap-2 ml-2">
-                <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file corrente">🗑️</button>
-                <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva MD</button>
+            <div class="flex items-center gap-2 ml-auto sm:ml-2">
+                <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
+                <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
             </div>
         </div>
     </header>
@@ -140,17 +146,15 @@
     <div id="file-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             <div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg">📂 GitHub File Manager</h3>
+                <h3 class="font-bold text-lg">📂 File Manager</h3>
                 <button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
             </div>
-            
             <div class="bg-slate-100 p-2 flex items-center gap-2 border-b">
-                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️ Su</button>
+                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️</button>
                 <input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly>
-                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold hover:bg-green-200">+ Cartella</button>
+                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button>
                 <button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button>
             </div>
-
             <div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start">
                 <p class="col-span-full text-center text-gray-400 mt-10">Caricamento...</p>
             </div>
@@ -158,31 +162,31 @@
     </div>
 
     <div id="editor-area">
-        <div class="w-1/2 h-full flex flex-col border-r bg-white">
+        
+        <div id="editor-col" class="w-full md:w-1/2 h-full flex flex-col border-r bg-white">
             
             <div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
-                <button onclick="fmt('**', '**')" class="fmt-btn font-bold" title="Grassetto">B</button>
-                <button onclick="fmt('*', '*')" class="fmt-btn italic" title="Corsivo">I</button>
+                <button onclick="fmt('**', '**')" class="fmt-btn font-bold">B</button>
+                <button onclick="fmt('*', '*')" class="fmt-btn italic">I</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('# ', '')" class="fmt-btn" title="Titolo 1">H1</button>
-                <button onclick="fmt('## ', '')" class="fmt-btn" title="Titolo 2">H2</button>
-                <button onclick="fmt('### ', '')" class="fmt-btn" title="Titolo 3">H3</button>
+                <button onclick="fmt('# ', '')" class="fmt-btn">H1</button>
+                <button onclick="fmt('## ', '')" class="fmt-btn">H2</button>
+                <button onclick="fmt('### ', '')" class="fmt-btn">H3</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('- ', '')" class="fmt-btn" title="Elenco puntato">List</button>
-                <button onclick="fmt('1. ', '')" class="fmt-btn" title="Elenco numerato">1.</button>
+                <button onclick="fmt('- ', '')" class="fmt-btn">List</button>
+                <button onclick="fmt('1. ', '')" class="fmt-btn">1.</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('[', '](url)')" class="fmt-btn" title="Link">🔗</button>
-                <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Codice">Code</button>
-                <button onclick="fmt('```\n', '\n```')" class="fmt-btn font-mono" title="Blocco Codice">{ }</button>
-                <button onclick="fmt('> ', '')" class="fmt-btn" title="Citazione">""</button>
+                <button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
+                <button onclick="fmt('`', '`')" class="fmt-btn font-mono">Code</button>
+                <button onclick="fmt('```\n', '\n```')" class="fmt-btn font-mono">{ }</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('\n---\n', '')" class="fmt-btn" title="Separatore">HR</button>
+                <button onclick="fmt('\n---\n', '')" class="fmt-btn">HR</button>
             </div>
 
             <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia a scrivere..."></textarea>
         </div>
 
-        <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+        <div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
 
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
             <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
@@ -199,6 +203,8 @@
     <script>
         const input = document.getElementById('markdown-input');
         const preview = document.getElementById('preview-output');
+        const editorCol = document.getElementById('editor-col');
+        
         marked.setOptions({ breaks: true, gfm: true });
 
         window.addEventListener('load', () => {
@@ -210,6 +216,25 @@
             document.getElementById('meta-date').valueAsDate = new Date();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.log);
         });
+
+        // --- MOBILE TOGGLE ---
+        let isMobilePreview = false;
+        function toggleMobileView() {
+            const btn = document.getElementById('mobile-toggle-btn');
+            if(isMobilePreview) {
+                // Torna all'Editor
+                editorCol.classList.remove('hidden');
+                preview.classList.add('hidden');
+                btn.innerText = "👁️ Anteprima";
+            } else {
+                // Vai all'Anteprima
+                renderPreview(); // Aggiorna prima di mostrare
+                editorCol.classList.add('hidden');
+                preview.classList.remove('hidden');
+                btn.innerText = "✏️ Editor";
+            }
+            isMobilePreview = !isMobilePreview;
+        }
 
         // --- UTILS ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -230,34 +255,16 @@
             if(show) { document.getElementById('loading-msg').innerText = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
         }
 
-        // --- FORMATTING TOOLBAR FUNCTION ---
         function fmt(startTag, endTag) {
             const start = input.selectionStart;
             const end = input.selectionEnd;
             const text = input.value;
-            const selectedText = text.substring(start, end);
-            
-            // Inserisci i tag attorno al testo (o inserisci tag vuoti se nulla è selezionato)
-            const newText = startTag + selectedText + endTag;
-            
+            const sel = text.substring(start, end);
+            const newText = startTag + sel + endTag;
             input.value = text.substring(0, start) + newText + text.substring(end);
-            
-            // Riposiziona il cursore
             input.focus();
-            if (selectedText.length > 0) {
-                // Se c'era testo selezionato, seleziona tutto il blocco nuovo (incluso tag)
-                // input.selectionStart = start; 
-                // input.selectionEnd = start + newText.length;
-                // OPPURE: Posiziona cursore alla fine
-                 input.selectionStart = start + newText.length;
-                 input.selectionEnd = start + newText.length;
-            } else {
-                // Se non c'era testo, metti il cursore in mezzo ai tag (es. **|**)
-                input.selectionStart = start + startTag.length;
-                input.selectionEnd = start + startTag.length;
-            }
-            
-            // Aggiorna anteprima
+            if (sel.length > 0) { input.selectionStart = start + newText.length; input.selectionEnd = start + newText.length; }
+            else { input.selectionStart = start + startTag.length; input.selectionEnd = start + startTag.length; }
             renderPreview();
         }
 
@@ -295,17 +302,13 @@ Scrivi qui...`;
         async function uploadMedia(file) {
             const creds = getCreds();
             if (!creds.token) return showStatus("Manca Token", 'error');
-            
             const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            // PULIZIA NOME (NO DATA)
             const name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
             const target = base + name;
-
             loading(true, "Upload...");
             try {
                 const buf = await file.arrayBuffer();
                 let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
-                
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
                 const resp = await fetch(url, {
                     method: 'PUT',
@@ -313,7 +316,6 @@ Scrivi qui...`;
                     body: JSON.stringify({ message: `Upload media`, content: btoa(bin) })
                 });
                 if (!resp.ok) throw new Error("Errore Upload");
-
                 const relPath = '/' + target.replace('docs/public/', ''); 
                 let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${name}](${relPath})\n`;
                 const s = input.selectionStart;
@@ -360,7 +362,7 @@ Scrivi qui...`;
                 const r = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 if(!r.ok) throw new Error("Errore Salvataggio");
                 showStatus("Salvato!");
-            } catch (e) { showStatus(e.message, 'error'); } finally { btn.innerText = "Salva MD"; btn.disabled = false; }
+            } catch (e) { showStatus(e.message, 'error'); } finally { btn.innerText = "Salva"; btn.disabled = false; }
         }
         
         async function deleteFile() {
@@ -379,40 +381,31 @@ Scrivi qui...`;
 
         // --- 4. FILE MANAGER ---
         let currentFmPath = '';
-
         function openFileManager() {
             let startPath = document.getElementById('gh-img-base').value.trim() || '';
             fmNavigate(startPath);
             openModal('file-modal');
         }
-
         async function fmNavigate(path) {
             path = path.replace(/^\/|\/$/g, '');
             currentFmPath = path;
             document.getElementById('fm-path').value = path;
-            
             const creds = getCreds();
             const listEl = document.getElementById('fm-list');
             listEl.innerHTML = '<p class="col-span-full text-center text-gray-500">Caricamento...</p>';
-
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
                 const res = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!res.ok) throw new Error("Cartella non trovata o vuota");
-                
+                if (!res.ok) throw new Error("Cartella vuota o inesistente");
                 const data = await res.json();
-                if(!Array.isArray(data)) throw new Error("Questo non è un elenco di file");
-
+                if(!Array.isArray(data)) throw new Error("Errore dati");
                 data.sort((a, b) => (a.type === b.type) ? 0 : (a.type === 'dir' ? -1 : 1));
-
                 listEl.innerHTML = '';
                 data.forEach(item => {
                     const isDir = item.type === 'dir';
                     const icon = isDir ? '📁' : (item.name.match(/\.(jpg|png|webp|gif)$/i) ? '🖼️' : '📄');
-                    
                     const div = document.createElement('div');
                     div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isDir ? 'bg-indigo-50 border-indigo-100' : 'bg-white'}`;
-                    
                     div.innerHTML = `
                         <div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isDir ? `fmNavigate('${item.path}')` : `fmSelectFile('${item.path}')`}">
                             <span class="text-xl">${icon}</span>
@@ -421,98 +414,45 @@ Scrivi qui...`;
                         <div class="flex gap-1">
                             <button onclick="fmRename('${item.path}', '${item.sha}', '${item.type}')" class="p-1 hover:bg-gray-200 rounded text-xs" title="Rinomina">✏️</button>
                             <button onclick="fmDelete('${item.path}', '${item.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded text-xs" title="Elimina">🗑️</button>
-                        </div>
-                    `;
+                        </div>`;
                     listEl.appendChild(div);
                 });
-
                 if(data.length === 0) listEl.innerHTML = '<p class="text-gray-400 italic">Cartella vuota</p>';
-
-            } catch (e) {
-                listEl.innerHTML = `<p class="text-red-500 col-span-full">Errore: ${e.message}</p>`;
-            }
+            } catch (e) { listEl.innerHTML = `<p class="text-red-500 col-span-full">Errore: ${e.message}</p>`; }
         }
-
-        function fmUp() {
-            if (!currentFmPath) return;
-            const parts = currentFmPath.split('/');
-            parts.pop();
-            fmNavigate(parts.join('/'));
-        }
-
+        function fmUp() { if (!currentFmPath) return; const p = currentFmPath.split('/'); p.pop(); fmNavigate(p.join('/')); }
         function fmRefresh() { fmNavigate(currentFmPath); }
-
         function fmSelectFile(path) {
-            if(path.endsWith('.md')) {
-                if(confirm("Vuoi aprire questo file nell'editor?")) {
-                    document.getElementById('gh-path').value = path;
-                    closeModal('file-modal');
-                    loadFromGitHub();
-                }
-            } else {
-                alert("File selezionato: " + path);
-            }
+            if(path.endsWith('.md')) { if(confirm("Aprire?")) { document.getElementById('gh-path').value = path; closeModal('file-modal'); loadFromGitHub(); } }
+            else alert("File: " + path);
         }
-
         async function fmCreateFolder() {
-            const name = prompt("Nome Nuova Cartella:");
-            if (!name) return;
+            const name = prompt("Nome Cartella:"); if (!name) return;
             const creds = getCreds();
-            const cleanName = name.replace(/[^a-zA-Z0-9._-]/g, '');
-            const newPath = (currentFmPath ? currentFmPath + '/' : '') + cleanName + '/.keep';
-            loading(true, "Creo cartella...");
-            try {
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
-                await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Create folder ${cleanName}`, content: "" })
-                });
-                fmRefresh(); showStatus("Cartella Creata!");
-            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+            const newPath = (currentFmPath ? currentFmPath + '/' : '') + name.replace(/[^a-zA-Z0-9._-]/g, '') + '/.keep';
+            loading(true);
+            try { await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `New folder`, content: "" }) }); fmRefresh(); }
+            catch(e) { alert(e); } finally { loading(false); }
         }
-
         async function fmDelete(path, sha) {
-            if(!confirm(`Eliminare definitivamente ${path}?`)) return;
-            const creds = getCreds();
-            loading(true, "Elimino...");
-            try {
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
-                await fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Delete ${path}`, sha: sha })
-                });
-                fmRefresh(); showStatus("Eliminato!");
-            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+            if(!confirm("Eliminare?")) return;
+            const creds = getCreds(); loading(true);
+            try { await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`, { method: 'DELETE', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Del`, sha: sha }) }); fmRefresh(); }
+            catch(e) { alert(e); } finally { loading(false); }
         }
-
         async function fmRename(oldPath, sha, type) {
-            if(type === 'dir') return alert("Non puoi rinominare cartelle.");
-            const newName = prompt("Nuovo nome (con estensione):", oldPath.split('/').pop());
-            if(!newName || newName === oldPath.split('/').pop()) return;
+            if(type === 'dir') return alert("No rinomina cartelle");
+            const newName = prompt("Nuovo nome:", oldPath.split('/').pop()); if(!newName) return;
             const creds = getCreds();
-            const parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
-            const newPath = (parent ? parent + '/' : '') + newName;
-            loading(true, "Rinomino...");
+            const newPath = oldPath.substring(0, oldPath.lastIndexOf('/')) + '/' + newName;
+            loading(true);
             try {
-                const getUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
-                const getRes = await fetch(getUrl, { headers: { 'Authorization': `token ${creds.token}` } });
-                const data = await getRes.json();
-                const putUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
-                await fetch(putUrl, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Rename ${oldPath} to ${newPath}`, content: data.content })
-                });
-                const delUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
-                await fetch(delUrl, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Delete old file after rename`, sha: sha })
-                });
-                fmRefresh(); showStatus("Rinominato!");
-            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+                const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`, { headers: {'Authorization': `token ${creds.token}`} });
+                const d = await g.json();
+                await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: `Ren`, content: d.content }) });
+                await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`, { method: 'DELETE', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: `Del old`, sha: sha }) });
+                fmRefresh();
+            } catch(e) { alert(e); } finally { loading(false); }
         }
     </script>
 </body>
