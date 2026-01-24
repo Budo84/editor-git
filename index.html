@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proflama Editor</title>
-    <meta name="description" content="Editor Markdown per Proflama.">
+    <meta name="description" content="Editor Markdown CMS per GitHub.">
     <meta name="robots" content="noindex, nofollow">
     
     <link rel="manifest" href="manifest.json">
@@ -46,27 +46,31 @@
     <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
         <div class="flex flex-wrap gap-2 items-center">
             
-            <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Vai agli strumenti">
+            <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">
                 🛠️ Tools
             </a>
 
-            <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition flex items-center gap-1">
-                📝 Intestazione Post
+            <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">
+                📝 Intestazione
             </button>
 
-            <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition flex items-center gap-1">
+            <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">
                 📷 Carica Media
+            </button>
+
+            <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition flex items-center gap-1">
+                📂 Gestione File
             </button>
 
             <div class="flex flex-col flex-grow md:flex-grow-0 relative ml-auto sm:ml-2">
                 <div class="flex">
-                    <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-64 focus:border-blue-500 outline-none font-mono bg-gray-50">
-                    <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File esistente">📂</button>
+                    <input type="text" id="gh-path" placeholder="docs/posts/nome.md" class="border rounded-l px-2 py-1 text-sm w-full md:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
+                    <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File">📂</button>
                 </div>
             </div>
             
             <div class="flex items-center gap-2 ml-2">
-                <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina File">🗑️</button>
+                <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file corrente">🗑️</button>
                 <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva MD</button>
             </div>
         </div>
@@ -79,61 +83,18 @@
                 <button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label>
-                    <input type="text" id="meta-title" placeholder="Titolo del post" class="w-full border rounded px-3 py-2 text-lg font-bold" oninput="autoUpdateFilename()">
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Descrizione (SEO)</label>
-                    <textarea id="meta-desc" rows="2" placeholder="Descrizione per Google..." class="w-full border rounded px-3 py-2"></textarea>
-                </div>
-
+                <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
-                        <select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white">
-                            <option value="Microbit">Microbit</option>
-                            <option value="Arduino">Arduino</option>
-                            <option value="Mbot">Mbot</option>
-                            <option value="Scratch">Scratch</option>
-                            <option value="Elettronica">Elettronica</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Target Classe</label>
-                        <select id="meta-target" class="w-full border rounded px-3 py-2 bg-white">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="Tutti" selected>Tutti</option>
-                        </select>
-                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Classe</label><select id="meta-target" class="w-full border rounded px-3 py-2 bg-white"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="Tutti" selected>Tutti</option></select></div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Data</label>
-                        <input type="date" id="meta-date" class="w-full border rounded px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Bozza (Draft)</label>
-                        <select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white">
-                            <option value="false">Pubblico (False)</option>
-                            <option value="true">Bozza (True)</option>
-                        </select>
-                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div>
                 </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Percorso Immagine Copertina</label>
-                    <input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm">
-                </div>
-
-                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">
-                    ⬇️ Inserisci nell'Editor
-                </button>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm"></div>
+                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
             </div>
         </div>
     </div>
@@ -141,63 +102,59 @@
     <div id="media-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
             <div class="bg-amber-50 p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-amber-800">📷 Carica Immagini/Video</h3>
+                <h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3>
                 <button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-6 space-y-6">
-                
                 <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Cartella GitHub:</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span>
                     <input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono">
                 </div>
-
-                <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition cursor-pointer relative bg-white group">
+                <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition relative bg-white group">
                     <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm">
                     <div class="pointer-events-none group-hover:scale-105 transition-transform">
                         <div class="text-5xl mb-3">📤</div>
-                        <span class="font-bold text-gray-600 block text-lg">Scegli File</span>
-                        <span class="text-sm text-gray-400">o trascina qui</span>
+                        <span class="font-bold text-gray-600 block">Scegli File</span>
                     </div>
                 </div>
+                <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
+            </div>
+        </div>
+    </div>
 
-                <div class="text-center">
-                    <p class="text-xs text-gray-400">Supporta: JPG, PNG, WEBP, MP4</p>
-                </div>
+    <div id="file-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">📂 GitHub File Manager</h3>
+                <button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b">
+                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️ Su</button>
+                <input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly>
+                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold hover:bg-green-200">+ Cartella</button>
+                <button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button>
+            </div>
 
-                <details class="group pt-4 border-t">
-                    <summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none flex items-center gap-2 justify-center hover:text-gray-600">
-                        <span>🔐 Configurazione GitHub</span>
-                        <span class="group-open:rotate-180 transition">▼</span>
-                    </summary>
-                    <div class="grid grid-cols-1 gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
-                        <input type="password" id="gh-token" placeholder="Token (ghp_...)" class="border rounded px-2 py-1 text-sm">
-                        <div class="flex gap-2">
-                            <input type="text" id="gh-owner" placeholder="User" class="border rounded px-2 py-1 text-sm w-1/2">
-                            <input type="text" id="gh-repo" placeholder="Repo" class="border rounded px-2 py-1 text-sm w-1/2">
-                        </div>
-                    </div>
-                </details>
-
+            <div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start">
+                <p class="col-span-full text-center text-gray-400 mt-10">Caricamento...</p>
             </div>
         </div>
     </div>
 
     <div id="editor-area">
-        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia cliccando su '📝 Intestazione Post' per generare i dati..."></textarea>
+        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia a scrivere..."></textarea>
         <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
-        
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
             <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
-                 <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                 <svg class="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                  <span id="loading-msg" class="font-semibold text-gray-800 text-sm">Elaborazione...</span>
             </div>
         </div>
     </div>
 
     <div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
-        <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium">
-            <span id="status-icon"></span><span id="status-text">Messaggio</span>
-        </div>
+        <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium"><span id="status-icon"></span><span id="status-text">Messaggio</span></div>
     </div>
 
     <script>
@@ -205,7 +162,6 @@
         const preview = document.getElementById('preview-output');
         marked.setOptions({ breaks: true, gfm: true });
 
-        // --- INIT ---
         window.addEventListener('load', () => {
             ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
@@ -216,112 +172,90 @@
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.log);
         });
 
-        // --- MODAL SYSTEM ---
+        // --- UTILS ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        // --- UTILS ---
-        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))); }
+        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
         function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
         function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
         function showStatus(msg, type = 'success') {
             const el = document.getElementById('status-msg');
-            const icon = document.getElementById('status-icon');
-            const text = document.getElementById('status-text');
-            text.innerText = msg;
             el.firstElementChild.className = type === 'error' ? "bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3" : "bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3";
-            icon.innerHTML = type === 'error' ? '⚠️' : '✅';
+            document.getElementById('status-icon').innerHTML = type === 'error' ? '⚠️' : '✅';
+            document.getElementById('status-text').innerText = msg;
             el.classList.remove('translate-y-20', 'opacity-0');
             setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
         }
-
-        // --- 1. METADATA LOGIC ---
-        function autoUpdateFilename() {
-            const title = document.getElementById('meta-title').value;
-            const slug = title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
-            const fullPath = `docs/blog/${slug}.md`;
-            document.getElementById('gh-path').value = fullPath;
-            localStorage.setItem('my_gh-path', fullPath);
+        function loading(show, msg="") {
+            const el = document.getElementById('loading-overlay');
+            if(show) { document.getElementById('loading-msg').innerText = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
         }
 
+        // --- 1. METADATA ---
+        function autoUpdateFilename() {
+            const t = document.getElementById('meta-title').value;
+            const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
+            const path = `docs/posts/${slug}.md`;
+            document.getElementById('gh-path').value = path;
+            localStorage.setItem('my_gh-path', path);
+        }
         function applyMetadata() {
-            const title = document.getElementById('meta-title').value;
-            const desc = document.getElementById('meta-desc').value;
-            const date = document.getElementById('meta-date').value;
-            const cat = document.getElementById('meta-cat').value;
-            const target = document.getElementById('meta-target').value;
-            const draft = document.getElementById('meta-draft').value;
-            const img = document.getElementById('meta-image').value;
-            
-            // IL TUO SCHEMA ESATTO
-            const template = `---
-title: ${title}
-description: ${desc}
-draft: ${draft}
-date: ${date}
-category: ${cat}
-class_target: ${target}
-image: ${img}
+            const t = `---
+title: ${document.getElementById('meta-title').value}
+description: ${document.getElementById('meta-desc').value}
+draft: ${document.getElementById('meta-draft').value}
+date: ${document.getElementById('meta-date').value}
+category: ${document.getElementById('meta-cat').value}
+class_target: ${document.getElementById('meta-target').value}
+image: ${document.getElementById('meta-image').value}
 ---
 
-# ${title}
+# ${document.getElementById('meta-title').value}
 
-Scrivi qui il tuo articolo...`;
-
-            if (input.value.trim().length > 10 && !confirm("Sovrascrivere il contenuto attuale?")) return;
-            
-            input.value = template;
-            renderPreview();
-            closeModal('meta-modal');
-            showStatus("Intestazione creata!");
+Scrivi qui...`;
+            if(input.value.length > 10 && !confirm("Sovrascrivo?")) return;
+            input.value = t; renderPreview(); closeModal('meta-modal'); showStatus("Intestazione OK");
         }
 
-        // --- 2. UPLOAD MEDIA ---
-        const fileInput = document.getElementById('modal-file-input');
-        fileInput.addEventListener('change', async (e) => {
-            const f = e.target.files[0];
-            if(f) await uploadMedia(f);
-            fileInput.value = '';
+        // --- 2. MEDIA UPLOAD ---
+        document.getElementById('modal-file-input').addEventListener('change', async (e) => {
+            if(e.target.files[0]) await uploadMedia(e.target.files[0]);
+            e.target.value = '';
         });
-
         async function uploadMedia(file) {
             const creds = getCreds();
-            if (!creds.token) { showStatus("Manca Token", 'error'); return; }
+            if (!creds.token) return showStatus("Manca Token", 'error');
             
-            let base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-            let target = `${base}${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${name}`;
+            const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
+            // PULIZIA NOME (NO DATA)
+            const name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+            const target = base + name;
 
-            document.getElementById('loading-msg').innerText = "Upload in corso..."; 
-            document.getElementById('loading-overlay').classList.remove('hidden');
-
+            loading(true, "Upload...");
             try {
                 const buf = await file.arrayBuffer();
                 let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
                 
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
                 const resp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `Upload media`, content: btoa(bin) })
                 });
-                
                 if (!resp.ok) throw new Error("Errore Upload");
-                
+
                 const relPath = '/' + target.replace('docs/public/', ''); 
-                let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${file.name}](${relPath})\n`;
-                
+                let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${name}](${relPath})\n`;
                 const s = input.selectionStart;
                 input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview();
-                showStatus("Media caricato!");
+                showStatus("Caricato: " + name);
                 closeModal('media-modal');
-
             } catch (err) { showStatus(err.message, 'error'); } 
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+            finally { loading(false); }
         }
 
-        // --- 3. EDITOR CORE ---
+        // --- 3. EDITOR ---
         function renderPreview() {
             preview.innerHTML = marked.parse(input.value);
             if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
@@ -331,52 +265,206 @@ Scrivi qui il tuo articolo...`;
         async function loadFromGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token || !path) { showStatus("Manca Token o Percorso", 'error'); return; }
-            document.getElementById('loading-msg').innerText = "Download..."; document.getElementById('loading-overlay').classList.remove('hidden');
+            if (!creds.token || !path) return showStatus("Dati mancanti", 'error');
+            loading(true, "Scarico...");
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
-                const resp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!resp.ok) throw new Error("Errore GitHub: " + resp.status);
-                input.value = b64DecodeUnicode((await resp.json()).content);
-                renderPreview();
-                showStatus("File caricato!");
-            } catch (err) { showStatus(err.message, 'error'); } 
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); }
+                const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                if (!r.ok) throw new Error("File non trovato");
+                input.value = b64DecodeUnicode((await r.json()).content);
+                renderPreview(); showStatus("Caricato!");
+            } catch (e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
         async function syncTextToGitHub() {
             const creds = getCreds();
             const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token || !path) { showStatus("Mancano dati", 'error'); return; }
-            const btn = document.getElementById('save-btn');
-            btn.innerText = "⏳..."; btn.disabled = true;
+            if (!creds.token) return showStatus("Manca Token", 'error');
+            const btn = document.getElementById('save-btn'); btn.innerText = "⏳..."; btn.disabled = true;
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
                 let sha = null;
-                try { const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } }); if (r.ok) sha = (await r.json()).sha; } catch(e) {}
-                const body = { message: sha ? `Update ${path}` : `Create ${path}`, content: b64EncodeUnicode(input.value) };
-                if (sha) body.sha = sha;
-                const resp = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                if (!resp.ok) throw new Error((await resp.json()).message);
+                try { const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } }); if(r.ok) sha = (await r.json()).sha; } catch(e){}
+                const body = { message: sha?`Update ${path}`:`Create ${path}`, content: b64EncodeUnicode(input.value) };
+                if(sha) body.sha = sha;
+                const r = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                if(!r.ok) throw new Error("Errore Salvataggio");
                 showStatus("Salvato!");
-            } catch (err) { showStatus(err.message, 'error'); } 
-            finally { btn.innerText = "Salva MD"; btn.disabled = false; }
+            } catch (e) { showStatus(e.message, 'error'); } finally { btn.innerText = "Salva MD"; btn.disabled = false; }
         }
-
+        
         async function deleteFile() {
-            const creds = getCreds();
-            const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token || !path) { showStatus("Nessun file selezionato", 'error'); return; }
-            if (!confirm("ELIMINARE DEFINITIVAMENTE: " + path + "?")) return;
+            const creds = getCreds(); const path = document.getElementById('gh-path').value.trim();
+            if(!confirm("ELIMINARE "+path+"?")) return;
+            loading(true, "Elimino...");
             try {
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
-                const getResp = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!getResp.ok) throw new Error("File non trovato.");
-                const sha = (await getResp.json()).sha;
+                const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                if(!r.ok) throw new Error("File non trovato");
+                const sha = (await r.json()).sha;
                 await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Delete ${path}`, sha: sha }) });
-                input.value = ''; document.getElementById('gh-path').value = ''; renderPreview();
+                input.value=''; renderPreview(); showStatus("Eliminato!");
+            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+        }
+
+        // --- 4. FILE MANAGER (LOGICA COMPLESSA) ---
+        let currentFmPath = '';
+
+        function openFileManager() {
+            // Usa il percorso delle immagini o root se vuoto
+            let startPath = document.getElementById('gh-img-base').value.trim() || '';
+            fmNavigate(startPath);
+            openModal('file-modal');
+        }
+
+        async function fmNavigate(path) {
+            path = path.replace(/^\/|\/$/g, ''); // Pulisce slash iniziali/finali
+            currentFmPath = path;
+            document.getElementById('fm-path').value = path;
+            
+            const creds = getCreds();
+            const listEl = document.getElementById('fm-list');
+            listEl.innerHTML = '<p class="col-span-full text-center text-gray-500">Caricamento...</p>';
+
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
+                const res = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                if (!res.ok) throw new Error("Cartella non trovata o vuota");
+                
+                const data = await res.json();
+                if(!Array.isArray(data)) throw new Error("Questo non è un elenco di file");
+
+                // Ordina: Cartelle prima, poi file
+                data.sort((a, b) => (a.type === b.type) ? 0 : (a.type === 'dir' ? -1 : 1));
+
+                listEl.innerHTML = '';
+                data.forEach(item => {
+                    const isDir = item.type === 'dir';
+                    const icon = isDir ? '📁' : (item.name.match(/\.(jpg|png|webp|gif)$/i) ? '🖼️' : '📄');
+                    
+                    const div = document.createElement('div');
+                    div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isDir ? 'bg-indigo-50 border-indigo-100' : 'bg-white'}`;
+                    
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isDir ? `fmNavigate('${item.path}')` : `fmSelectFile('${item.path}')`}">
+                            <span class="text-xl">${icon}</span>
+                            <span class="text-sm font-medium truncate">${item.name}</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="fmRename('${item.path}', '${item.sha}', '${item.type}')" class="p-1 hover:bg-gray-200 rounded text-xs" title="Rinomina">✏️</button>
+                            <button onclick="fmDelete('${item.path}', '${item.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded text-xs" title="Elimina">🗑️</button>
+                        </div>
+                    `;
+                    listEl.appendChild(div);
+                });
+
+                if(data.length === 0) listEl.innerHTML = '<p class="text-gray-400 italic">Cartella vuota</p>';
+
+            } catch (e) {
+                listEl.innerHTML = `<p class="text-red-500 col-span-full">Errore: ${e.message}</p>`;
+            }
+        }
+
+        function fmUp() {
+            if (!currentFmPath) return;
+            const parts = currentFmPath.split('/');
+            parts.pop();
+            fmNavigate(parts.join('/'));
+        }
+
+        function fmRefresh() { fmNavigate(currentFmPath); }
+
+        function fmSelectFile(path) {
+            // Se clicco un file, decido se caricarlo nell'editor o impostarlo come img path
+            if(path.endsWith('.md')) {
+                if(confirm("Vuoi aprire questo file nell'editor?")) {
+                    document.getElementById('gh-path').value = path;
+                    closeModal('file-modal');
+                    loadFromGitHub();
+                }
+            } else {
+                alert("File selezionato: " + path);
+            }
+        }
+
+        async function fmCreateFolder() {
+            const name = prompt("Nome Nuova Cartella:");
+            if (!name) return;
+            
+            // Crea un file .keep dentro la nuova cartella
+            const creds = getCreds();
+            const cleanName = name.replace(/[^a-zA-Z0-9._-]/g, '');
+            const newPath = (currentFmPath ? currentFmPath + '/' : '') + cleanName + '/.keep';
+            
+            loading(true, "Creo cartella...");
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Create folder ${cleanName}`, content: "" }) // Content vuoto base64
+                });
+                fmRefresh();
+                showStatus("Cartella Creata!");
+            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+        }
+
+        async function fmDelete(path, sha) {
+            if(!confirm(`Eliminare definitivamente ${path}?`)) return;
+            const creds = getCreds();
+            loading(true, "Elimino...");
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
+                await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Delete ${path}`, sha: sha })
+                });
+                fmRefresh();
                 showStatus("Eliminato!");
-            } catch (err) { showStatus(err.message, 'error'); }
+            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+        }
+
+        async function fmRename(oldPath, sha, type) {
+            if(type === 'dir') return alert("Non puoi rinominare intere cartelle da qui (troppo rischioso). Crea una nuova cartella e sposta i file.");
+            
+            const newName = prompt("Nuovo nome (con estensione):", oldPath.split('/').pop());
+            if(!newName || newName === oldPath.split('/').pop()) return;
+            
+            // Logica Rinomina GitHub: 1. GET content -> 2. PUT new path -> 3. DELETE old path
+            const creds = getCreds();
+            const parent = oldPath.substring(0, oldPath.lastIndexOf('/'));
+            const newPath = (parent ? parent + '/' : '') + newName;
+
+            loading(true, "Rinomino (Copia + Cancella)...");
+            try {
+                // 1. Scarica contenuto vecchio
+                const getUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
+                const getRes = await fetch(getUrl, { headers: { 'Authorization': `token ${creds.token}` } });
+                if(!getRes.ok) throw new Error("Errore lettura file originale");
+                const data = await getRes.json();
+
+                // 2. Crea file nuovo
+                const putUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${newPath}`;
+                const putRes = await fetch(putUrl, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Rename ${oldPath} to ${newPath}`, content: data.content }) // Usa lo stesso content base64
+                });
+                if(!putRes.ok) throw new Error("Errore creazione nuovo file");
+
+                // 3. Cancella vecchio
+                const delUrl = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`;
+                await fetch(delUrl, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Delete old file after rename`, sha: sha })
+                });
+
+                fmRefresh();
+                showStatus("Rinominato!");
+
+            } catch(e) { showStatus("Errore Rinomina: " + e.message, 'error'); } finally { loading(false); }
         }
     </script>
 </body>
