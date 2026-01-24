@@ -18,9 +18,13 @@
         .btn-nav:not(.active) { @apply bg-white text-gray-600 hover:bg-gray-100; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
+<body class="min-h-screen flex flex-col items-center py-10 px-4 relative">
 
-    <header class="text-center mb-10">
+    <a href="index.html" class="absolute top-4 left-4 bg-white text-blue-600 px-4 py-2 rounded-lg shadow font-bold text-sm border border-blue-100 hover:bg-blue-50 transition no-underline flex items-center gap-2 z-20">
+        ⬅️ <span class="hidden sm:inline">Torna all'Editor</span>
+    </a>
+
+    <header class="text-center mb-10 mt-8">
         <h1 class="text-3xl font-black text-slate-800 mb-2">🛠️ Webmaster Tools</h1>
         <p class="text-slate-500">Strumenti per gestire il blog Proflama</p>
     </header>
@@ -68,11 +72,10 @@
         <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
             <span class="bg-purple-100 text-purple-600 p-2 rounded-lg">📱</span> Generatore Icone App
         </h2>
-        <p class="text-sm text-gray-500 mb-6">Carica un logo quadrato (es. 1024x1024). Creerà un file ZIP con tutte le icone necessarie per il sito e il file Manifest.</p>
+        <p class="text-sm text-gray-500 mb-6">Carica un logo quadrato. Crea ZIP con icone per il sito e Manifest.</p>
 
         <div class="space-y-4">
             <input type="file" id="icon-input" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
-            
             <button onclick="generateIcons()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
                 📦 Genera e Scarica ZIP
             </button>
@@ -83,16 +86,14 @@
         <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
             <span class="bg-emerald-100 text-emerald-600 p-2 rounded-lg">📝</span> Helper Intestazione
         </h2>
-        <p class="text-sm text-gray-500 mb-6">Compila i campi per generare il blocco corretto da incollare nell'Editor.</p>
-
         <div class="grid gap-4">
             <div>
-                <label class="text-xs font-bold text-gray-400 uppercase">Titolo Articolo</label>
-                <input type="text" id="meta-title" placeholder="Es: Il mio progetto Arduino" class="w-full border rounded px-3 py-2" oninput="updateMeta()">
+                <label class="text-xs font-bold text-gray-400 uppercase">Titolo</label>
+                <input type="text" id="meta-title" placeholder="Titolo" class="w-full border rounded px-3 py-2" oninput="updateMeta()">
             </div>
             <div>
-                <label class="text-xs font-bold text-gray-400 uppercase">Descrizione (Google)</label>
-                <textarea id="meta-desc" rows="2" placeholder="Breve riassunto..." class="w-full border rounded px-3 py-2" oninput="updateMeta()"></textarea>
+                <label class="text-xs font-bold text-gray-400 uppercase">Descrizione</label>
+                <textarea id="meta-desc" rows="2" placeholder="Descrizione (per Google)..." class="w-full border rounded px-3 py-2" oninput="updateMeta()"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -109,148 +110,93 @@
                     <input type="date" id="meta-date" class="w-full border rounded px-3 py-2" onchange="updateMeta()">
                 </div>
             </div>
-
             <div class="bg-gray-800 text-gray-300 p-4 rounded-xl font-mono text-sm relative mt-4">
                 <button onclick="copyMeta()" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs rounded">Copia</button>
-                <pre id="meta-output">---
-...
----</pre>
+                <pre id="meta-output">---...---</pre>
             </div>
         </div>
     </div>
 
     <script>
-        // --- GESTIONE TABS ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tool-card').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById('tab-' + tabId).classList.add('active');
-            document.getElementById('btn-' + tabId).classList.add('active');
+        function switchTab(t) {
+            document.querySelectorAll('.tool-card, .btn-nav').forEach(e => e.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
+            document.getElementById('btn-'+t).classList.add('active');
         }
 
-        // --- 1. LOGICA IMMAGINI ---
+        // IMG Logic
         function previewImage() {
-            const file = document.getElementById('img-input').files[0];
-            if(file) {
-                document.getElementById('img-preview').src = URL.createObjectURL(file);
+            const f = document.getElementById('img-input').files[0];
+            if(f) {
+                document.getElementById('img-preview').src = URL.createObjectURL(f);
                 document.getElementById('img-preview').classList.remove('hidden');
                 document.getElementById('img-placeholder').classList.add('hidden');
             }
         }
-
         function processImage() {
-            const file = document.getElementById('img-input').files[0];
-            if (!file) return alert("Seleziona un'immagine!");
-
-            const maxWidth = parseInt(document.getElementById('img-width').value);
-            const quality = parseInt(document.getElementById('img-quality').value) / 100;
-            const reader = new FileReader();
-
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxWidth) {
-                        height *= maxWidth / width;
-                        width = maxWidth;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    canvas.toBlob(function(blob) {
-                        saveAs(blob, file.name.split('.')[0] + "_opt.webp");
-                    }, 'image/webp', quality);
-                }
-                img.src = event.target.result;
-            }
-            reader.readAsDataURL(file);
+            const f = document.getElementById('img-input').files[0];
+            if(!f) return alert("Scegli immagine");
+            const mw = parseInt(document.getElementById('img-width').value);
+            const q = parseInt(document.getElementById('img-quality').value)/100;
+            const r = new FileReader();
+            r.onload = e => {
+                const i = new Image();
+                i.onload = () => {
+                    const c = document.createElement('canvas');
+                    let w=i.width, h=i.height;
+                    if(w>mw) { h*=mw/w; w=mw; }
+                    c.width=w; c.height=h;
+                    c.getContext('2d').drawImage(i,0,0,w,h);
+                    c.toBlob(b => saveAs(b, f.name.split('.')[0]+"_opt.webp"), 'image/webp', q);
+                };
+                i.src = e.target.result;
+            };
+            r.readAsDataURL(f);
         }
 
-        // --- 2. LOGICA ICONE (ZIP) ---
+        // Icon Logic
         function generateIcons() {
-            const file = document.getElementById('icon-input').files[0];
-            if (!file) return alert("Carica un logo!");
-
-            const sizes = [
-                { w: 192, name: "icon.png" }, // Android/PWA standard
-                { w: 512, name: "icon.png" }, // Store standard (useremo questo come 512)
-                { w: 180, name: "apple-touch-icon.png" }, // iPhone
-                { w: 32, name: "favicon.ico" } // Browser (finto ico, png rinominato va bene modernamente)
-            ];
-
-            const zip = new JSZip();
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = async function() {
-                    let processed = 0;
-                    
-                    // Creiamo una cartella nello zip
-                    const folder = zip.folder("icons_generated");
-
-                    sizes.forEach(size => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = size.w;
-                        canvas.height = size.w; // Quadrato
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, size.w, size.w);
-
-                        canvas.toBlob(function(blob) {
-                            // Se è 512 lo salviamo come icon.png base
-                            // Se è 192 lo chiamiamo icon-192.png
-                            let filename = size.name;
-                            if(size.w === 192) filename = "web-app-manifest-192x192.png";
-                            if(size.w === 512) filename = "web-app-manifest-512x512.png";
-
-                            folder.file(filename, blob);
-                            processed++;
-
-                            if (processed === sizes.length) {
-                                zip.generateAsync({type:"blob"}).then(function(content) {
-                                    saveAs(content, "proflama-icons.zip");
-                                });
-                            }
+            const f = document.getElementById('icon-input').files[0];
+            if(!f) return alert("Carica logo");
+            const sizes = [{w:192,n:"web-app-manifest-192x192.png"},{w:512,n:"web-app-manifest-512x512.png"},{w:180,n:"apple-touch-icon.png"},{w:32,n:"favicon.ico"}];
+            const z = new JSZip();
+            const r = new FileReader();
+            r.onload = e => {
+                const i = new Image();
+                i.onload = () => {
+                    let p=0;
+                    const fol = z.folder("icons_generated");
+                    sizes.forEach(s => {
+                        const c = document.createElement('canvas');
+                        c.width=s.w; c.height=s.w;
+                        c.getContext('2d').drawImage(i,0,0,s.w,s.w);
+                        c.toBlob(b => {
+                            fol.file(s.n, b);
+                            p++;
+                            if(p===sizes.length) z.generateAsync({type:"blob"}).then(c => saveAs(c,"icons.zip"));
                         }, 'image/png');
                     });
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
+                };
+                i.src = e.target.result;
+            };
+            r.readAsDataURL(f);
         }
 
-        // --- 3. LOGICA METADATA ---
-        document.getElementById('meta-date').valueAsDate = new Date(); // Oggi di default
-        
+        // Meta Logic
+        document.getElementById('meta-date').valueAsDate = new Date();
         function updateMeta() {
-            const title = document.getElementById('meta-title').value;
-            const desc = document.getElementById('meta-desc').value;
-            const cat = document.getElementById('meta-cat').value;
-            const date = document.getElementById('meta-date').value;
-
-            const text = `---
-title: ${title}
-description: ${desc}
-date: ${date}
-category: ${cat}
+            const t = `---
+title: ${document.getElementById('meta-title').value}
+description: ${document.getElementById('meta-desc').value}
+date: ${document.getElementById('meta-date').value}
+category: ${document.getElementById('meta-cat').value}
 class_target: Tutti
 image: /img/default.jpg
 ---`;
-            document.getElementById('meta-output').innerText = text;
+            document.getElementById('meta-output').innerText = t;
         }
-        updateMeta(); // Init
-
-        function copyMeta() {
-            navigator.clipboard.writeText(document.getElementById('meta-output').innerText);
-            alert("Copiato!");
-        }
+        function copyMeta() { navigator.clipboard.writeText(document.getElementById('meta-output').innerText); alert("Copiato!"); }
+        updateMeta();
     </script>
 </body>
 </html>
