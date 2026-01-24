@@ -30,25 +30,15 @@
         textarea { resize: none; outline: none; transition: all 0.2s; }
         
         /* Modal Styles */
-        #settings-modal { transition: opacity 0.2s ease-in-out; }
-        #settings-modal.hidden { opacity: 0; pointer-events: none; }
-        #settings-modal:not(.hidden) { opacity: 1; pointer-events: auto; }
+        .modal { transition: opacity 0.2s ease-in-out; }
+        .modal.hidden { opacity: 0; pointer-events: none; }
+        .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
 
         /* Preview Styles */
         .prose { padding-bottom: 3rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
-        .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
-        .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
-        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose p { margin-bottom: 1em; line-height: 1.6; }
-        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
-        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
-        .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
-        .prose pre code { background-color: transparent; color: inherit; padding: 0; }
         .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .prose a { color: #2563eb; text-decoration: underline; }
-        mjx-container { outline: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
@@ -60,8 +50,12 @@
                 🛠️ Tools
             </a>
 
-            <button onclick="toggleModal()" class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow hover:bg-slate-700 transition flex items-center gap-2">
-                ⚙️ Impostazioni & Media
+            <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition flex items-center gap-1">
+                📝 Intestazione Post
+            </button>
+
+            <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition flex items-center gap-1">
+                📷 Carica Media
             </button>
 
             <div class="flex flex-col flex-grow md:flex-grow-0 relative ml-auto sm:ml-2">
@@ -78,94 +72,118 @@
         </div>
     </header>
 
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
-            <div class="bg-slate-100 p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-slate-700">⚙️ Gestione Articolo</h3>
-                <button onclick="toggleModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+    <div id="meta-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-blue-50 p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3>
+                <button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button>
             </div>
-
-            <div class="p-6 overflow-y-auto space-y-8">
+            <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
                 
-                <div class="space-y-4">
-                    <h4 class="text-sm font-bold text-blue-600 uppercase tracking-wider border-b pb-1">1. Dati & Titolo</h4>
-                    
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Titolo dell'Articolo</label>
-                        <input type="text" id="modal-title" placeholder="Es: Il mio progetto Arduino" class="w-full text-lg border-2 border-blue-100 rounded-lg px-4 py-2 focus:border-blue-500 outline-none transition" oninput="autoUpdateFilename()">
-                        <p class="text-xs text-gray-500 mt-1">Il nome del file verrà generato automaticamente da questo titolo.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
-                            <input type="text" id="modal-cat" list="cat-suggestions" placeholder="Scrivi o scegli..." class="w-full border rounded px-3 py-2 bg-white" value="Arduino">
-                            <datalist id="cat-suggestions">
-                                <option value="Arduino">
-                                <option value="Microbit">
-                                <option value="Elettronica">
-                                <option value="Blog">
-                                <option value="Progetti">
-                            </datalist>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Target (Classe)</label>
-                            <input type="text" id="modal-target" value="Tutti" class="w-full border rounded px-3 py-2">
-                        </div>
-                    </div>
-                    
-                    <div>
-                         <label class="block text-xs font-bold text-gray-500 uppercase">Data</label>
-                         <input type="date" id="modal-date" class="w-full border rounded px-3 py-2">
-                    </div>
-
-                    <button onclick="applyMetadata()" class="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition">
-                        ⬇️ Inserisci Intestazione nell'Editor
-                    </button>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label>
+                    <input type="text" id="meta-title" placeholder="Titolo del post" class="w-full border rounded px-3 py-2 text-lg font-bold" oninput="autoUpdateFilename()">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Descrizione (SEO)</label>
+                    <textarea id="meta-desc" rows="2" placeholder="Descrizione per Google..." class="w-full border rounded px-3 py-2"></textarea>
                 </div>
 
-                <div class="space-y-4">
-                    <h4 class="text-sm font-bold text-amber-600 uppercase tracking-wider border-b pb-1">2. Carica Immagini / Video</h4>
-                    
-                    <div class="flex items-center gap-2 bg-amber-50 p-3 rounded-lg border border-amber-100">
-                        <span class="text-xs font-bold text-amber-800">Cartella:</span>
-                        <input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-white border rounded px-2 py-1 text-xs font-mono">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
+                        <select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white">
+                            <option value="Microbit">Microbit</option>
+                            <option value="Arduino">Arduino</option>
+                            <option value="Mbot">Mbot</option>
+                            <option value="Scratch">Scratch</option>
+                            <option value="Elettronica">Elettronica</option>
+                        </select>
                     </div>
-
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 transition cursor-pointer relative" id="drop-zone">
-                        <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm">
-                        <div class="pointer-events-none">
-                            <div class="text-4xl mb-2">📤</div>
-                            <span class="font-bold text-gray-400 block">Clicca o trascina qui i file</span>
-                            <span class="text-xs text-gray-400">(JPG, PNG, MP4)</span>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Target Classe</label>
+                        <select id="meta-target" class="w-full border rounded px-3 py-2 bg-white">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="Tutti" selected>Tutti</option>
+                        </select>
                     </div>
                 </div>
 
-                <details class="group">
-                    <summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none flex items-center gap-2">
-                        <span>🔐 Credenziali GitHub</span>
-                        <span class="border-b border-gray-300 flex-1"></span>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Data</label>
+                        <input type="date" id="meta-date" class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Bozza (Draft)</label>
+                        <select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white">
+                            <option value="false">Pubblico (False)</option>
+                            <option value="true">Bozza (True)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Percorso Immagine Copertina</label>
+                    <input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm">
+                </div>
+
+                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">
+                    ⬇️ Inserisci nell'Editor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="media-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="bg-amber-50 p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg text-amber-800">📷 Carica Immagini/Video</h3>
+                <button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-6">
+                
+                <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Cartella GitHub:</span>
+                    <input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono">
+                </div>
+
+                <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition cursor-pointer relative bg-white group">
+                    <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm">
+                    <div class="pointer-events-none group-hover:scale-105 transition-transform">
+                        <div class="text-5xl mb-3">📤</div>
+                        <span class="font-bold text-gray-600 block text-lg">Scegli File</span>
+                        <span class="text-sm text-gray-400">o trascina qui</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-xs text-gray-400">Supporta: JPG, PNG, WEBP, MP4</p>
+                </div>
+
+                <details class="group pt-4 border-t">
+                    <summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none flex items-center gap-2 justify-center hover:text-gray-600">
+                        <span>🔐 Configurazione GitHub</span>
                         <span class="group-open:rotate-180 transition">▼</span>
                     </summary>
-                    <div class="grid grid-cols-3 gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
-                        <input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs">
-                        <input type="text" id="gh-owner" placeholder="User" class="border rounded px-2 py-1 text-xs">
-                        <input type="text" id="gh-repo" placeholder="Repo" class="border rounded px-2 py-1 text-xs">
+                    <div class="grid grid-cols-1 gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
+                        <input type="password" id="gh-token" placeholder="Token (ghp_...)" class="border rounded px-2 py-1 text-sm">
+                        <div class="flex gap-2">
+                            <input type="text" id="gh-owner" placeholder="User" class="border rounded px-2 py-1 text-sm w-1/2">
+                            <input type="text" id="gh-repo" placeholder="Repo" class="border rounded px-2 py-1 text-sm w-1/2">
+                        </div>
                     </div>
                 </details>
 
-            </div>
-            
-            <div class="bg-gray-50 p-4 border-t text-right">
-                <button onclick="toggleModal()" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold shadow hover:bg-slate-700 transition">Chiudi</button>
             </div>
         </div>
     </div>
 
     <div id="editor-area">
-        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Apri le Impostazioni ⚙️ per iniziare un nuovo articolo..."></textarea>
+        <textarea id="markdown-input" class="w-1/2 h-full p-6 bg-white border-r font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia cliccando su '📝 Intestazione Post' per generare i dati..."></textarea>
         <div id="preview-output" class="w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
         
         <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
@@ -185,7 +203,6 @@
     <script>
         const input = document.getElementById('markdown-input');
         const preview = document.getElementById('preview-output');
-        const modal = document.getElementById('settings-modal');
         marked.setOptions({ breaks: true, gfm: true });
 
         // --- INIT ---
@@ -195,12 +212,15 @@
                 if (saved) document.getElementById(id).value = saved;
                 document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
             });
-            document.getElementById('modal-date').valueAsDate = new Date();
+            document.getElementById('meta-date').valueAsDate = new Date();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.log);
         });
 
+        // --- MODAL SYSTEM ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
         // --- UTILS ---
-        function toggleModal() { modal.classList.toggle('hidden'); }
         function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))); }
         function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
         function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
@@ -215,51 +235,49 @@
             setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
         }
 
-        // --- 1. AUTO-FILENAME & METADATA ---
+        // --- 1. METADATA LOGIC ---
         function autoUpdateFilename() {
-            const title = document.getElementById('modal-title').value;
-            // Converte: "Il Mio Post" -> "il-mio-post"
+            const title = document.getElementById('meta-title').value;
             const slug = title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
             const fullPath = `docs/posts/${slug}.md`;
-            
-            // Aggiorna campo Path
-            const pathInput = document.getElementById('gh-path');
-            pathInput.value = fullPath;
+            document.getElementById('gh-path').value = fullPath;
             localStorage.setItem('my_gh-path', fullPath);
         }
 
         function applyMetadata() {
-            const title = document.getElementById('modal-title').value;
-            const date = document.getElementById('modal-date').value;
-            const cat = document.getElementById('modal-cat').value;
-            const target = document.getElementById('modal-target').value;
+            const title = document.getElementById('meta-title').value;
+            const desc = document.getElementById('meta-desc').value;
+            const date = document.getElementById('meta-date').value;
+            const cat = document.getElementById('meta-cat').value;
+            const target = document.getElementById('meta-target').value;
+            const draft = document.getElementById('meta-draft').value;
+            const img = document.getElementById('meta-image').value;
             
-            // Template che rispetta la tua struttura originale + description
+            // IL TUO SCHEMA ESATTO
             const template = `---
 title: ${title}
-description: Breve descrizione per Google...
-draft: false
+description: ${desc}
+draft: ${draft}
 date: ${date}
 category: ${cat}
 class_target: ${target}
-image: /img/default.jpg
+image: ${img}
 ---
 
 # ${title}
 
-Scrivi qui...`;
+Scrivi qui il tuo articolo...`;
 
             if (input.value.trim().length > 10 && !confirm("Sovrascrivere il contenuto attuale?")) return;
             
             input.value = template;
             renderPreview();
-            toggleModal(); // Chiude il modale
-            showStatus("Intestazione creata e nome file impostato!");
+            closeModal('meta-modal');
+            showStatus("Intestazione creata!");
         }
 
-        // --- 2. UPLOAD MEDIA (NEL MODALE) ---
+        // --- 2. UPLOAD MEDIA ---
         const fileInput = document.getElementById('modal-file-input');
-        
         fileInput.addEventListener('change', async (e) => {
             const f = e.target.files[0];
             if(f) await uploadMedia(f);
@@ -271,9 +289,7 @@ Scrivi qui...`;
             if (!creds.token) { showStatus("Manca Token", 'error'); return; }
             
             let base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            // Usa il nome file originale ma pulito
             let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-            // Aggiunge timestamp per unicità
             let target = `${base}${new Date().toISOString().slice(0,19).replace(/[:.]/g,'-')}_${name}`;
 
             document.getElementById('loading-msg').innerText = "Upload in corso..."; 
@@ -295,18 +311,17 @@ Scrivi qui...`;
                 const relPath = '/' + target.replace('docs/public/', ''); 
                 let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${file.name}](${relPath})\n`;
                 
-                // Inserisce nel testo
                 const s = input.selectionStart;
                 input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview();
                 showStatus("Media caricato!");
-                toggleModal(); // Chiude il modale dopo l'upload per vedere il risultato
+                closeModal('media-modal');
 
             } catch (err) { showStatus(err.message, 'error'); } 
             finally { document.getElementById('loading-overlay').classList.add('hidden'); }
         }
 
-        // --- 3. CORE EDITOR FUNCTIONS ---
+        // --- 3. EDITOR CORE ---
         function renderPreview() {
             preview.innerHTML = marked.parse(input.value);
             if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
