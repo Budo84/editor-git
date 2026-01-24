@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proflama Webmaster Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        body { background-color: #f8fafc; color: #334155; }
+        .tool-card { display: none; }
+        .tool-card.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-nav { @apply px-4 py-2 rounded-lg font-bold text-sm transition-all; }
+        .btn-nav.active { @apply bg-blue-600 text-white shadow-md; }
+        .btn-nav:not(.active) { @apply bg-white text-gray-600 hover:bg-gray-100; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <header class="text-center mb-10">
+        <h1 class="text-3xl font-black text-slate-800 mb-2">🛠️ Webmaster Tools</h1>
+        <p class="text-slate-500">Strumenti per gestire il blog Proflama</p>
+    </header>
+
+    <div class="flex flex-wrap justify-center gap-2 mb-8 bg-gray-200 p-1.5 rounded-xl">
+        <button onclick="switchTab('img')" class="btn-nav active" id="btn-img">🖼️ Immagini WebP</button>
+        <button onclick="switchTab('icon')" class="btn-nav" id="btn-icon">📱 Genera Icone</button>
+        <button onclick="switchTab('meta')" class="btn-nav" id="btn-meta">📝 Metadata Post</button>
+    </div>
+
+    <div id="tab-img" class="tool-card active w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-600 p-2 rounded-lg">🖼️</span> Ottimizzatore Immagini
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">Converte JPG/PNG in <b>WebP</b> (leggero per il sito) e ridimensiona.</p>
+
+        <div class="space-y-4">
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-blue-50 transition cursor-pointer relative">
+                <input type="file" id="img-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="previewImage()">
+                <div id="img-placeholder">
+                    <div class="text-4xl mb-2">📂</div>
+                    <span class="font-bold text-gray-400">Clicca o trascina qui un'immagine</span>
+                </div>
+                <img id="img-preview" class="max-h-64 mx-auto hidden rounded shadow-sm">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Larghezza Max (px)</label>
+                    <input type="number" id="img-width" value="1200" class="w-full border rounded px-3 py-2 font-mono text-sm">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Qualità (0-100)</label>
+                    <input type="number" id="img-quality" value="80" class="w-full border rounded px-3 py-2 font-mono text-sm">
+                </div>
+            </div>
+
+            <button onclick="processImage()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                ⚡ Scarica WebP Ottimizzata
+            </button>
+        </div>
+    </div>
+
+    <div id="tab-icon" class="tool-card w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <span class="bg-purple-100 text-purple-600 p-2 rounded-lg">📱</span> Generatore Icone App
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">Carica un logo quadrato (es. 1024x1024). Creerà un file ZIP con tutte le icone necessarie per il sito e il file Manifest.</p>
+
+        <div class="space-y-4">
+            <input type="file" id="icon-input" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"/>
+            
+            <button onclick="generateIcons()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                📦 Genera e Scarica ZIP
+            </button>
+        </div>
+    </div>
+
+    <div id="tab-meta" class="tool-card w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-slate-100">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <span class="bg-emerald-100 text-emerald-600 p-2 rounded-lg">📝</span> Helper Intestazione
+        </h2>
+        <p class="text-sm text-gray-500 mb-6">Compila i campi per generare il blocco corretto da incollare nell'Editor.</p>
+
+        <div class="grid gap-4">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Titolo Articolo</label>
+                <input type="text" id="meta-title" placeholder="Es: Il mio progetto Arduino" class="w-full border rounded px-3 py-2" oninput="updateMeta()">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Descrizione (Google)</label>
+                <textarea id="meta-desc" rows="2" placeholder="Breve riassunto..." class="w-full border rounded px-3 py-2" oninput="updateMeta()"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Categoria</label>
+                    <select id="meta-cat" class="w-full border rounded px-3 py-2" onchange="updateMeta()">
+                        <option>Arduino</option>
+                        <option>Microbit</option>
+                        <option>Elettronica</option>
+                        <option>Blog</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Data</label>
+                    <input type="date" id="meta-date" class="w-full border rounded px-3 py-2" onchange="updateMeta()">
+                </div>
+            </div>
+
+            <div class="bg-gray-800 text-gray-300 p-4 rounded-xl font-mono text-sm relative mt-4">
+                <button onclick="copyMeta()" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs rounded">Copia</button>
+                <pre id="meta-output">---
+...
+---</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GESTIONE TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tool-card').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // --- 1. LOGICA IMMAGINI ---
+        function previewImage() {
+            const file = document.getElementById('img-input').files[0];
+            if(file) {
+                document.getElementById('img-preview').src = URL.createObjectURL(file);
+                document.getElementById('img-preview').classList.remove('hidden');
+                document.getElementById('img-placeholder').classList.add('hidden');
+            }
+        }
+
+        function processImage() {
+            const file = document.getElementById('img-input').files[0];
+            if (!file) return alert("Seleziona un'immagine!");
+
+            const maxWidth = parseInt(document.getElementById('img-width').value);
+            const quality = parseInt(document.getElementById('img-quality').value) / 100;
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(function(blob) {
+                        saveAs(blob, file.name.split('.')[0] + "_opt.webp");
+                    }, 'image/webp', quality);
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // --- 2. LOGICA ICONE (ZIP) ---
+        function generateIcons() {
+            const file = document.getElementById('icon-input').files[0];
+            if (!file) return alert("Carica un logo!");
+
+            const sizes = [
+                { w: 192, name: "icon.png" }, // Android/PWA standard
+                { w: 512, name: "icon.png" }, // Store standard (useremo questo come 512)
+                { w: 180, name: "apple-touch-icon.png" }, // iPhone
+                { w: 32, name: "favicon.ico" } // Browser (finto ico, png rinominato va bene modernamente)
+            ];
+
+            const zip = new JSZip();
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = async function() {
+                    let processed = 0;
+                    
+                    // Creiamo una cartella nello zip
+                    const folder = zip.folder("icons_generated");
+
+                    sizes.forEach(size => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = size.w;
+                        canvas.height = size.w; // Quadrato
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, size.w, size.w);
+
+                        canvas.toBlob(function(blob) {
+                            // Se è 512 lo salviamo come icon.png base
+                            // Se è 192 lo chiamiamo icon-192.png
+                            let filename = size.name;
+                            if(size.w === 192) filename = "web-app-manifest-192x192.png";
+                            if(size.w === 512) filename = "web-app-manifest-512x512.png";
+
+                            folder.file(filename, blob);
+                            processed++;
+
+                            if (processed === sizes.length) {
+                                zip.generateAsync({type:"blob"}).then(function(content) {
+                                    saveAs(content, "proflama-icons.zip");
+                                });
+                            }
+                        }, 'image/png');
+                    });
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // --- 3. LOGICA METADATA ---
+        document.getElementById('meta-date').valueAsDate = new Date(); // Oggi di default
+        
+        function updateMeta() {
+            const title = document.getElementById('meta-title').value;
+            const desc = document.getElementById('meta-desc').value;
+            const cat = document.getElementById('meta-cat').value;
+            const date = document.getElementById('meta-date').value;
+
+            const text = `---
+title: ${title}
+description: ${desc}
+date: ${date}
+category: ${cat}
+class_target: Tutti
+image: /img/default.jpg
+---`;
+            document.getElementById('meta-output').innerText = text;
+        }
+        updateMeta(); // Init
+
+        function copyMeta() {
+            navigator.clipboard.writeText(document.getElementById('meta-output').innerText);
+            alert("Copiato!");
+        }
+    </script>
+</body>
+</html>
