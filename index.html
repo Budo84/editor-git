@@ -37,8 +37,18 @@
         /* Preview Styles */
         .prose { padding-bottom: 3rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
+        .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
+        .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose p { margin-bottom: 1em; line-height: 1.6; }
+        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
+        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
+        .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
+        .prose pre code { background-color: transparent; color: inherit; padding: 0; }
         .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .prose a { color: #2563eb; text-decoration: underline; }
+        mjx-container { outline: none !important; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
@@ -90,12 +100,24 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
-                            <select id="modal-cat" class="w-full border rounded px-3 py-2 bg-white"><option>Arduino</option><option>Microbit</option><option>Elettronica</option><option>Blog</option></select>
+                            <input type="text" id="modal-cat" list="cat-suggestions" placeholder="Scrivi o scegli..." class="w-full border rounded px-3 py-2 bg-white" value="Arduino">
+                            <datalist id="cat-suggestions">
+                                <option value="Arduino">
+                                <option value="Microbit">
+                                <option value="Elettronica">
+                                <option value="Blog">
+                                <option value="Progetti">
+                            </datalist>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase">Data</label>
-                            <input type="date" id="modal-date" class="w-full border rounded px-3 py-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase">Target (Classe)</label>
+                            <input type="text" id="modal-target" value="Tutti" class="w-full border rounded px-3 py-2">
                         </div>
+                    </div>
+                    
+                    <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase">Data</label>
+                         <input type="date" id="modal-date" class="w-full border rounded px-3 py-2">
                     </div>
 
                     <button onclick="applyMetadata()" class="w-full bg-blue-50 text-blue-700 font-bold py-2 rounded-lg border border-blue-200 hover:bg-blue-100 transition">
@@ -210,14 +232,16 @@
             const title = document.getElementById('modal-title').value;
             const date = document.getElementById('modal-date').value;
             const cat = document.getElementById('modal-cat').value;
+            const target = document.getElementById('modal-target').value;
             
+            // Template che rispetta la tua struttura originale + description
             const template = `---
 title: ${title}
 description: Breve descrizione per Google...
 draft: false
 date: ${date}
 category: ${cat}
-class_target: Tutti
+class_target: ${target}
 image: /img/default.jpg
 ---
 
