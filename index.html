@@ -104,12 +104,40 @@
                 <button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Classe</label><select id="meta-target" class="w-full border rounded px-3 py-2 bg-white"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="Tutti" selected>Tutti</option></select></div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label>
+                    <input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()">
                 </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label>
+                    <textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
+                        <select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white">
+                            <option value="Microbit">Microbit</option>
+                            <option value="Arduino">Arduino</option>
+                            <option value="Mbot">Mbot</option>
+                            <option value="Scratch">Scratch</option>
+                            <option value="Elettronica">Elettronica</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe (Multipla)</label>
+                        <div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2">
+                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label>
+                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label>
+                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label>
+                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elementari</label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div>
@@ -222,16 +250,9 @@
         function toggleMobileView() {
             const btn = document.getElementById('mobile-toggle-btn');
             if(isMobilePreview) {
-                // Torna all'Editor
-                editorCol.classList.remove('hidden');
-                preview.classList.add('hidden');
-                btn.innerText = "👁️ Anteprima";
+                editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText = "👁️ Anteprima";
             } else {
-                // Vai all'Anteprima
-                renderPreview(); // Aggiorna prima di mostrare
-                editorCol.classList.add('hidden');
-                preview.classList.remove('hidden');
-                btn.innerText = "✏️ Editor";
+                renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText = "✏️ Editor";
             }
             isMobilePreview = !isMobilePreview;
         }
@@ -268,7 +289,7 @@
             renderPreview();
         }
 
-        // --- 1. METADATA ---
+        // --- 1. METADATA (MODIFICATO: Solo 1,2,3,Elementari) ---
         function autoUpdateFilename() {
             const t = document.getElementById('meta-title').value;
             const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -276,14 +297,19 @@
             document.getElementById('gh-path').value = path;
             localStorage.setItem('my_gh-path', path);
         }
+        
         function applyMetadata() {
+            // LOGICA CHECKBOX: RACCOGLIE I VALORI SELEZIONATI
+            const checkedTargets = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(cb => cb.value);
+            const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Elementari'; // Default Elementari se vuoto
+
             const t = `---
 title: ${document.getElementById('meta-title').value}
 description: ${document.getElementById('meta-desc').value}
 draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
 category: ${document.getElementById('meta-cat').value}
-class_target: ${document.getElementById('meta-target').value}
+class_target: ${targetString}
 image: ${document.getElementById('meta-image').value}
 ---
 
