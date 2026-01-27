@@ -134,6 +134,7 @@
                             <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label>
                             <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label>
                             <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elementari</label>
+                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label>
                         </div>
                     </div>
                 </div>
@@ -289,7 +290,7 @@
             renderPreview();
         }
 
-        // --- 1. METADATA (MODIFICATO: Solo 1,2,3,Elementari) ---
+        // --- 1. METADATA (AGGIORNATO CON TUTTI I CHECKBOX E SAFE DESC) ---
         function autoUpdateFilename() {
             const t = document.getElementById('meta-title').value;
             const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -299,21 +300,26 @@
         }
         
         function applyMetadata() {
-            // LOGICA CHECKBOX: RACCOGLIE I VALORI SELEZIONATI
+            // SAFE DESCRIPTION
+            const title = document.getElementById('meta-title').value;
+            const rawDesc = document.getElementById('meta-desc').value;
+            const safeDesc = rawDesc.replace(/'/g, "''"); // Gestione apici singoli
+            
+            // CHECKBOX TARGET
             const checkedTargets = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(cb => cb.value);
-            const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Elementari'; // Default Elementari se vuoto
+            const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Tutti'; // Default Tutti se vuoto
 
             const t = `---
-title: ${document.getElementById('meta-title').value}
-description: ${document.getElementById('meta-desc').value}
+title: ${title}
+description: '${safeDesc}'
 draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
 category: ${document.getElementById('meta-cat').value}
-class_target: ${targetString}
+class_target: "${targetString}"
 image: ${document.getElementById('meta-image').value}
 ---
 
-# ${document.getElementById('meta-title').value}
+# ${title}
 
 Scrivi qui...`;
             if(input.value.length > 10 && !confirm("Sovrascrivo?")) return;
