@@ -322,14 +322,44 @@
             renderPreview();
         }
 
+        // --- TEMPLATE LEZIONE AGGIORNATO SU MISURA ---
         function insertTemplate() {
-            const tpl = `\n## 🎯 Obiettivi\n- Imparare a...\n- Capire come funziona...\n\n## 🛠️ Materiale Necessario\n- 1x Scheda Microbit/Arduino\n- Cavi Jumper\n- LED e Resistenze\n\n## 💻 Codice\n\`\`\`cpp\n// Incolla qui il codice\n\`\`\`\n\n## 📝 Spiegazione\nScrivi qui la spiegazione passo passo...\n\n::: tip 💡 CONSIGLIO\nRicordati di salvare spesso il tuo lavoro!\n:::\n`;
+            const tpl = `
+### INTRODUZIONE TEORICA
+Spiega qui il concetto fondamentale (es. Legge di Ohm, Partitore...).
+
+### MONTAGGIO DEL CIRCUITO (Tinkercad)
+
+#### 1. Prepara i Componenti
+* 1x **Micro:bit**
+* 1x **Breadboard** (Mini)
+* 1x **Componente** (Specificare valore)
+
+#### 2. Il Cablaggio
+1. Collega il pin...
+2. Inserisci...
+
+<center>
+	<img src="img/robotica/nome_immagine.png" alt="circuito" width="300"/>
+</center>
+
+### IL CODICE
+Descrivi cosa deve fare il codice.
+
+### SIMULAZIONE E VERIFICA
+
+#### 1. Avvia la Simulazione
+* Clicca su...
+
+#### 2. Checklist di funzionamento
+* Cosa deve succedere?
+`;
             const start = input.selectionStart;
             input.value = input.value.substring(0, start) + tpl + input.value.substring(input.selectionEnd);
             renderPreview();
         }
 
-        // --- 1. METADATA (AGGIORNATO CON TUTTI I CHECKBOX E SAFE DESC) ---
+        // --- 1. METADATA ---
         function autoUpdateFilename() {
             const t = document.getElementById('meta-title').value;
             const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -342,11 +372,11 @@
             // SAFE DESCRIPTION
             const title = document.getElementById('meta-title').value;
             const rawDesc = document.getElementById('meta-desc').value;
-            const safeDesc = rawDesc.replace(/'/g, "''"); // Gestione apici singoli
+            const safeDesc = rawDesc.replace(/'/g, "''"); 
             
             // CHECKBOX TARGET
             const checkedTargets = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(cb => cb.value);
-            const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Tutti'; // Default Tutti se vuoto
+            const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Tutti'; 
 
             const t = `---
 title: ${title}
