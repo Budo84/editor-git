@@ -3,18 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proflama Editor</title>
-    <meta name="description" content="Editor Markdown CMS per GitHub.">
-    <meta name="robots" content="noindex, nofollow">
-    
-    <link rel="manifest" href="manifest.json">
+    <title>Proflama Editor Ultimate</title>
     <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
     <meta name="theme-color" content="#3b82f6">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -22,11 +16,15 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false });
+        window.mermaid = mermaid;
+    </script>
 
     <style>
         body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
-        textarea.dragging { border: 4px dashed #3b82f6; background-color: #eff6ff; }
         textarea { resize: none; outline: none; transition: all 0.2s; }
         
         /* Modal Styles */
@@ -34,8 +32,8 @@
         .modal.hidden { opacity: 0; pointer-events: none; }
         .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
 
-        /* Preview Styles */
-        .prose { padding-bottom: 3rem; }
+        /* Preview Styles (Typography) */
+        .prose { padding-bottom: 5rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
         .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
         .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
@@ -49,7 +47,7 @@
         .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .prose a { color: #2563eb; text-decoration: underline; }
 
-        /* Custom Admonitions Preview (Simulazione visiva) */
+        /* Custom Admonitions (Box Colorati) */
         .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
         .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
         .tip { border-color: #10b981; background-color: #ecfdf5; }
@@ -61,7 +59,7 @@
 
         /* Toolbar Button Style */
         .fmt-btn {
-            @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px];
+            @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center;
         }
     </style>
 </head>
@@ -71,31 +69,21 @@
         <div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
             
             <div class="flex items-center gap-2">
-                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">
-                    🛠️
-                </a>
-
-                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">
-                    📝 <span class="hidden sm:inline">Dati</span>
-                </button>
-
-                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">
-                    📷 <span class="hidden sm:inline">Media</span>
-                </button>
-
-                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition">
-                    📂 <span class="hidden sm:inline">File</span>
-                </button>
+                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">🛠️</a>
+                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">📝 Dati</button>
+                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">📷 Media</button>
+                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition">📂 File</button>
             </div>
 
-            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 hover:bg-purple-200 transition ml-auto">
-                👁️ Anteprima
-            </button>
+            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 hover:bg-purple-200 transition ml-auto">👁️ Anteprima</button>
 
             <div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
-                <div class="flex">
-                    <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
-                    <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File">📂</button>
+                <div class="flex items-center gap-2">
+                    <div class="flex">
+                        <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
+                        <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica File">📂</button>
+                    </div>
+                    <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline">0 parole</span>
                 </div>
             </div>
             
@@ -113,17 +101,14 @@
                 <button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label>
                     <input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()">
                 </div>
-                
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label>
                     <textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
@@ -135,7 +120,6 @@
                             <option value="Elettronica">Elettronica</option>
                         </select>
                     </div>
-                    
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe (Multipla)</label>
                         <div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2">
@@ -147,7 +131,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div>
                     <div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div>
@@ -173,9 +156,10 @@
                     <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm">
                     <div class="pointer-events-none group-hover:scale-105 transition-transform">
                         <div class="text-5xl mb-3">📤</div>
-                        <span class="font-bold text-gray-600 block">Scegli File</span>
+                        <span class="font-bold text-gray-600 block">Trascina o Scegli</span>
                     </div>
                 </div>
+                <p class="text-center text-xs text-gray-400">💡 Puoi anche incollare (Ctrl+V) direttamente nell'editor!</p>
                 <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
             </div>
         </div>
@@ -187,10 +171,11 @@
                 <h3 class="font-bold text-lg">📂 File Manager</h3>
                 <button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
             </div>
-            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b">
-                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️ Su</button>
+            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b flex-wrap">
+                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️</button>
+                <input type="text" id="fm-search" oninput="fmFilter()" placeholder="🔍 Cerca..." class="border rounded px-2 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
                 <input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly>
-                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold hover:bg-green-200">+ Cartella</button>
+                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button>
                 <button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button>
             </div>
             <div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start">
@@ -202,7 +187,6 @@
     <div id="editor-area">
         
         <div id="editor-col" class="w-full md:w-1/2 h-full flex flex-col border-r bg-white">
-            
             <div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
                 <button onclick="fmt('**', '**')" class="fmt-btn font-bold">B</button>
                 <button onclick="fmt('*', '*')" class="fmt-btn italic">I</button>
@@ -215,22 +199,23 @@
                 <button onclick="fmt('1. ', '')" class="fmt-btn">1.</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
                 <button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
-                <button onclick="fmt('`', '`')" class="fmt-btn font-mono">Code</button>
-                <button onclick="fmt('```\n', '\n```')" class="fmt-btn font-mono">{ }</button>
+                <button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
+                <button onclick="insertTable()" class="fmt-btn">📊 Tab</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('\n---\n', '')" class="fmt-btn">HR</button>
+                
+                <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
+                <button onclick="fmt('```\\n', '\\n```')" class="fmt-btn font-mono" title="Block">{ }</button>
+                <button onclick="fmt('```cpp\\n', '\\n```')" class="fmt-btn font-mono text-blue-600" title="C++">C++</button>
+                <button onclick="fmt('```python\\n', '\\n```')" class="fmt-btn font-mono text-yellow-600" title="Python">Py</button>
                 
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
                 <button onclick="insertTemplate()" class="fmt-btn bg-indigo-50 text-indigo-700 border-indigo-100 w-auto px-2 font-bold" title="Inserisci Modello Lezione">📋 Modello</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                
-                <button onclick="fmt('::: tip 💡 LO SAPEVI?\n', '\n:::\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100" title="Consiglio">💡</button>
-                <button onclick="fmt('::: warning ⚠️ ATTENZIONE\n', '\n:::\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100" title="Avviso">⚠️</button>
-                <button onclick="fmt('::: danger 🔥 PERICOLO\n', '\n:::\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100" title="Pericolo">🔥</button>
-                <button onclick="fmt('::: info ℹ️ INFO\n', '\n:::\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100" title="Info">ℹ️</button>
+                <button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
+                <button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
+                <button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
             </div>
 
-            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Inizia a scrivere..."></textarea>
+            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Scrivi la tua lezione... (Ctrl+S per salvare)"></textarea>
         </div>
 
         <div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
@@ -252,7 +237,7 @@
         const preview = document.getElementById('preview-output');
         const editorCol = document.getElementById('editor-col');
         
-        // Configura Marked per gestire i Custom Block (simulazione semplice)
+        // --- 1. CONFIGURAZIONE MARKDOWN ---
         marked.use({
             renderer: {
                 paragraph(text) {
@@ -268,6 +253,7 @@
         });
         marked.setOptions({ breaks: true, gfm: true });
 
+        // --- 2. INIZIALIZZAZIONE & AUTO-SAVE ---
         window.addEventListener('load', () => {
             ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
@@ -275,40 +261,71 @@
                 document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
             });
             document.getElementById('meta-date').valueAsDate = new Date();
-            if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.log);
+            
+            // Recupero Bozza Auto-Save
+            const savedDraft = localStorage.getItem('autosave_draft');
+            if (savedDraft && savedDraft.length > 10) {
+                if(confirm("Ho trovato una bozza non salvata. Vuoi recuperarla?")) {
+                    input.value = savedDraft;
+                    renderPreview();
+                }
+            }
         });
 
-        // --- MOBILE TOGGLE ---
-        let isMobilePreview = false;
-        function toggleMobileView() {
-            const btn = document.getElementById('mobile-toggle-btn');
-            if(isMobilePreview) {
-                editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText = "👁️ Anteprima";
-            } else {
-                renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText = "✏️ Editor";
+        // --- 3. EDITOR EVENTS (Shortcuts, Paste, Input) ---
+        input.addEventListener('input', () => {
+            // Auto-Save locale
+            localStorage.setItem('autosave_draft', input.value);
+            
+            // Word Count
+            const text = input.value;
+            const words = text.trim().split(/\s+/).length;
+            const time = Math.ceil(words / 200);
+            document.getElementById('word-count').innerText = `${words} parole (~${time} min)`;
+            
+            renderPreview();
+        });
+
+        // Scorciatoie Tastiera
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); syncTextToGitHub(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); fmt('**', '**'); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); fmt('*', '*'); }
+        });
+
+        // Incolla Immagini (Ctrl+V)
+        input.addEventListener('paste', async (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    if(!confirm("Vuoi caricare l'immagine dagli appunti su GitHub?")) return;
+                    const file = item.getAsFile();
+                    const newName = "paste_" + new Date().getTime() + ".png"; 
+                    const renamedFile = new File([file], newName, { type: file.type });
+                    await uploadMedia(renamedFile);
+                }
             }
-            isMobilePreview = !isMobilePreview;
+        });
+
+        async function renderPreview() {
+            preview.innerHTML = marked.parse(input.value);
+            if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
+            // Render Mermaid
+            if (window.mermaid) {
+                const graphs = document.querySelectorAll('.language-mermaid');
+                graphs.forEach(async (graph, index) => {
+                    const code = graph.innerText;
+                    const id = 'mermaid-' + index;
+                    try {
+                        const { svg } = await window.mermaid.render(id, code);
+                        graph.parentElement.innerHTML = svg;
+                    } catch (e) { console.log(e); }
+                });
+            }
         }
 
-        // --- UTILS ---
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
-        function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
-        function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
-        function showStatus(msg, type = 'success') {
-            const el = document.getElementById('status-msg');
-            el.firstElementChild.className = type === 'error' ? "bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3" : "bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3";
-            document.getElementById('status-icon').innerHTML = type === 'error' ? '⚠️' : '✅';
-            document.getElementById('status-text').innerText = msg;
-            el.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
-        }
-        function loading(show, msg="") {
-            const el = document.getElementById('loading-overlay');
-            if(show) { document.getElementById('loading-msg').innerText = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
-        }
-
+        // --- 4. FUNZIONI TOOLBAR ---
         function fmt(startTag, endTag) {
             const start = input.selectionStart;
             const end = input.selectionEnd;
@@ -322,44 +339,50 @@
             renderPreview();
         }
 
-        // --- TEMPLATE LEZIONE AGGIORNATO SU MISURA ---
         function insertTemplate() {
-            const tpl = `
-### INTRODUZIONE TEORICA
-Spiega qui il concetto fondamentale (es. Legge di Ohm, Partitore...).
-
-### MONTAGGIO DEL CIRCUITO (Tinkercad)
-
-#### 1. Prepara i Componenti
-* 1x **Micro:bit**
-* 1x **Breadboard** (Mini)
-* 1x **Componente** (Specificare valore)
-
-#### 2. Il Cablaggio
-1. Collega il pin...
-2. Inserisci...
-
-<center>
-	<img src="img/robotica/nome_immagine.png" alt="circuito" width="300"/>
-</center>
-
-### IL CODICE
-Descrivi cosa deve fare il codice.
-
-### SIMULAZIONE E VERIFICA
-
-#### 1. Avvia la Simulazione
-* Clicca su...
-
-#### 2. Checklist di funzionamento
-* Cosa deve succedere?
-`;
-            const start = input.selectionStart;
-            input.value = input.value.substring(0, start) + tpl + input.value.substring(input.selectionEnd);
-            renderPreview();
+            const tpl = `\n### INTRODUZIONE TEORICA\nSpiega qui il concetto fondamentale.\n\n### MONTAGGIO DEL CIRCUITO (Tinkercad)\n\n#### 1. Prepara i Componenti\n* 1x **Micro:bit**\n* 1x **Breadboard**\n\n#### 2. Il Cablaggio\n1. Collega il pin...\n\n<center>\n\t<img src="img/robotica/nome_immagine.png" alt="circuito" width="300"/>\n</center>\n\n### IL CODICE\nDescrivi cosa deve fare il codice.\n\n### SIMULAZIONE E VERIFICA\n#### 1. Avvia la Simulazione\n* Clicca su...\n`;
+            fmt(tpl, '');
         }
 
-        // --- 1. METADATA ---
+        function insertYouTube() {
+            const url = prompt("Link YouTube:"); if(!url) return;
+            let vid = url.split('v=')[1] || url.split('/').pop(); vid = vid.split('&')[0];
+            fmt(`\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="https://www.youtube.com/embed/${vid}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>\n`, '');
+        }
+
+        function insertTable() {
+            fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, '');
+        }
+
+        // --- 5. CORE FUNCTIONS (API, Modals) ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
+        function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+        function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
+        
+        function showStatus(msg, type = 'success') {
+            const el = document.getElementById('status-msg');
+            el.firstElementChild.className = type === 'error' ? "bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3" : "bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-lg flex gap-3";
+            document.getElementById('status-icon').innerHTML = type === 'error' ? '⚠️' : '✅';
+            document.getElementById('status-text').innerText = msg;
+            el.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => { el.classList.add('translate-y-20', 'opacity-0'); }, 4000);
+        }
+        function loading(show, msg="") {
+            const el = document.getElementById('loading-overlay');
+            if(show) { document.getElementById('loading-msg').innerText = msg; el.classList.remove('hidden'); } else { el.classList.add('hidden'); }
+        }
+        function toggleMobileView() {
+            const btn = document.getElementById('mobile-toggle-btn');
+            if(editorCol.classList.contains('hidden')) {
+                editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText = "👁️ Anteprima";
+            } else {
+                renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText = "✏️ Editor";
+            }
+        }
+
+        // --- 6. LOGICA METADATA (BLOG + CHECKBOX) ---
         function autoUpdateFilename() {
             const t = document.getElementById('meta-title').value;
             const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -369,12 +392,9 @@ Descrivi cosa deve fare il codice.
         }
         
         function applyMetadata() {
-            // SAFE DESCRIPTION
             const title = document.getElementById('meta-title').value;
             const rawDesc = document.getElementById('meta-desc').value;
             const safeDesc = rawDesc.replace(/'/g, "''"); 
-            
-            // CHECKBOX TARGET
             const checkedTargets = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(cb => cb.value);
             const targetString = checkedTargets.length > 0 ? checkedTargets.join(', ') : 'Tutti'; 
 
@@ -390,12 +410,12 @@ image: ${document.getElementById('meta-image').value}
 
 # ${title}
 
-Scrivi qui...`;
-            if(input.value.length > 10 && !confirm("Sovrascrivo?")) return;
-            input.value = t; renderPreview(); closeModal('meta-modal'); showStatus("Intestazione OK");
+`;
+            if(input.value.length > 10 && !confirm("Sovrascrivo il contenuto?")) return;
+            input.value = t; renderPreview(); closeModal('meta-modal'); showStatus("Intestazione Creata");
         }
 
-        // --- 2. MEDIA UPLOAD ---
+        // --- 7. UPLOAD MEDIA (HTML CENTRATO) ---
         document.getElementById('modal-file-input').addEventListener('change', async (e) => {
             if(e.target.files[0]) await uploadMedia(e.target.files[0]);
             e.target.value = '';
@@ -418,7 +438,12 @@ Scrivi qui...`;
                 });
                 if (!resp.ok) throw new Error("Errore Upload");
                 const relPath = '/' + target.replace('docs/public/', ''); 
-                let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n![${name}](${relPath})\n`;
+                
+                // Generazione HTML Centrato come richiesto
+                let tag = file.type.startsWith('video/') 
+                    ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` 
+                    : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
+                
                 const s = input.selectionStart;
                 input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview();
@@ -428,64 +453,18 @@ Scrivi qui...`;
             finally { loading(false); }
         }
 
-        // --- 3. EDITOR ---
-        function renderPreview() {
-            preview.innerHTML = marked.parse(input.value);
-            if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
-        }
-        input.addEventListener('input', renderPreview);
-
-        async function loadFromGitHub() {
-            const creds = getCreds();
-            const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token || !path) return showStatus("Dati mancanti", 'error');
-            loading(true, "Scarico...");
-            try {
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
-                const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!r.ok) throw new Error("File non trovato");
-                input.value = b64DecodeUnicode((await r.json()).content);
-                renderPreview(); showStatus("Caricato!");
-            } catch (e) { showStatus(e.message, 'error'); } finally { loading(false); }
-        }
-
-        async function syncTextToGitHub() {
-            const creds = getCreds();
-            const path = document.getElementById('gh-path').value.trim();
-            if (!creds.token) return showStatus("Manca Token", 'error');
-            const btn = document.getElementById('save-btn'); btn.innerText = "⏳..."; btn.disabled = true;
-            try {
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
-                let sha = null;
-                try { const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } }); if(r.ok) sha = (await r.json()).sha; } catch(e){}
-                const body = { message: sha?`Update ${path}`:`Create ${path}`, content: b64EncodeUnicode(input.value) };
-                if(sha) body.sha = sha;
-                const r = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                if(!r.ok) throw new Error("Errore Salvataggio");
-                showStatus("Salvato!");
-            } catch (e) { showStatus(e.message, 'error'); } finally { btn.innerText = "Salva"; btn.disabled = false; }
-        }
-        
-        async function deleteFile() {
-            const creds = getCreds(); const path = document.getElementById('gh-path').value.trim();
-            if(!confirm("ELIMINARE "+path+"?")) return;
-            loading(true, "Elimino...");
-            try {
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
-                const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
-                if(!r.ok) throw new Error("File non trovato");
-                const sha = (await r.json()).sha;
-                await fetch(url, { method: 'DELETE', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ message: `Delete ${path}`, sha: sha }) });
-                input.value=''; renderPreview(); showStatus("Eliminato!");
-            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
-        }
-
-        // --- 4. FILE MANAGER ---
+        // --- 8. FILE MANAGER (SEARCH) ---
         let currentFmPath = '';
         function openFileManager() {
             let startPath = document.getElementById('gh-img-base').value.trim() || '';
             fmNavigate(startPath);
             openModal('file-modal');
+        }
+        function fmFilter() {
+            const query = document.getElementById('fm-search').value.toLowerCase();
+            document.querySelectorAll('#fm-list > div').forEach(item => {
+                item.style.display = item.innerText.toLowerCase().includes(query) ? 'flex' : 'none';
+            });
         }
         async function fmNavigate(path) {
             path = path.replace(/^\/|\/$/g, '');
@@ -554,6 +533,39 @@ Scrivi qui...`;
                 await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${oldPath}`, { method: 'DELETE', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: `Del old`, sha: sha }) });
                 fmRefresh();
             } catch(e) { alert(e); } finally { loading(false); }
+        }
+
+        // --- 9. SYNC GITHUB (LOAD/SAVE) ---
+        async function loadFromGitHub() {
+            const creds = getCreds();
+            const path = document.getElementById('gh-path').value.trim();
+            if (!creds.token || !path) return showStatus("Dati mancanti", 'error');
+            loading(true, "Scarico...");
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}?t=${new Date().getTime()}`;
+                const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } });
+                if (!r.ok) throw new Error("File non trovato");
+                input.value = b64DecodeUnicode((await r.json()).content);
+                renderPreview(); showStatus("Caricato!");
+            } catch (e) { showStatus(e.message, 'error'); } finally { loading(false); }
+        }
+
+        async function syncTextToGitHub() {
+            const creds = getCreds();
+            const path = document.getElementById('gh-path').value.trim();
+            if (!creds.token) return showStatus("Manca Token", 'error');
+            const btn = document.getElementById('save-btn'); btn.innerText = "⏳..."; btn.disabled = true;
+            try {
+                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${path}`;
+                let sha = null;
+                try { const r = await fetch(url, { headers: { 'Authorization': `token ${creds.token}` } }); if(r.ok) sha = (await r.json()).sha; } catch(e){}
+                const body = { message: sha?`Update ${path}`:`Create ${path}`, content: b64EncodeUnicode(input.value) };
+                if(sha) body.sha = sha;
+                const r = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                if(!r.ok) throw new Error("Errore Salvataggio");
+                localStorage.removeItem('autosave_draft'); // Pulisce bozza
+                showStatus("Salvato!");
+            } catch (e) { showStatus(e.message, 'error'); } finally { btn.innerText = "Salva"; btn.disabled = false; }
         }
     </script>
 </body>
