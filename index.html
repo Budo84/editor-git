@@ -153,13 +153,13 @@
                     <input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono">
                 </div>
                 <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition relative bg-white group">
-                    <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm">
+                    <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
                     <div class="pointer-events-none group-hover:scale-105 transition-transform">
                         <div class="text-5xl mb-3">📤</div>
-                        <span class="font-bold text-gray-600 block">Trascina o Scegli</span>
+                        <span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span>
                     </div>
                 </div>
-                <p class="text-center text-xs text-gray-400">💡 Puoi anche incollare (Ctrl+V) direttamente nell'editor!</p>
+                <p class="text-center text-xs text-gray-400">💡 Puoi anche incollare (Ctrl+V) o trascinare più file insieme!</p>
                 <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
             </div>
         </div>
@@ -274,7 +274,6 @@
 
         // --- 3. EDITOR EVENTS (Shortcuts, Paste, Input) ---
         input.addEventListener('input', () => {
-            // Auto-Save locale
             localStorage.setItem('autosave_draft', input.value);
             
             // Word Count
@@ -286,32 +285,41 @@
             renderPreview();
         });
 
-        // Scorciatoie Tastiera
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); syncTextToGitHub(); }
             if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); fmt('**', '**'); }
             if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); fmt('*', '*'); }
         });
 
-        // Incolla Immagini (Ctrl+V)
+        // GESTIONE COPIA/INCOLLA IMMAGINI (MULTIPLO E NOMI REALI)
         input.addEventListener('paste', async (e) => {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            const filesToUpload = [];
+
             for (const item of items) {
                 if (item.kind === 'file' && item.type.startsWith('image/')) {
-                    e.preventDefault();
-                    if(!confirm("Vuoi caricare l'immagine dagli appunti su GitHub?")) return;
-                    const file = item.getAsFile();
-                    const newName = "paste_" + new Date().getTime() + ".png"; 
-                    const renamedFile = new File([file], newName, { type: file.type });
-                    await uploadMedia(renamedFile);
+                    filesToUpload.push(item.getAsFile());
+                }
+            }
+
+            if (filesToUpload.length > 0) {
+                e.preventDefault();
+                if(!confirm(`Vuoi caricare ${filesToUpload.length} immagine/i dagli appunti?`)) return;
+                
+                for (const file of filesToUpload) {
+                    await handleFileUploadLogic(file, true);
                 }
             }
         });
 
+        // GESTIONE ANTEPRIMA PULITA (SENZA FRONTMATTER)
         async function renderPreview() {
-            preview.innerHTML = marked.parse(input.value);
+            // Rimuovi Frontmatter (YAML) per l'anteprima
+            const content = input.value.replace(/^---[\s\S]*?---\s*/, '');
+            
+            preview.innerHTML = marked.parse(content);
             if (window.MathJax) MathJax.typesetPromise([preview]).catch((err) => console.log(err));
-            // Render Mermaid
+            
             if (window.mermaid) {
                 const graphs = document.querySelectorAll('.language-mermaid');
                 graphs.forEach(async (graph, index) => {
@@ -415,42 +423,68 @@ image: ${document.getElementById('meta-image').value}
             input.value = t; renderPreview(); closeModal('meta-modal'); showStatus("Intestazione Creata");
         }
 
-        // --- 7. UPLOAD MEDIA (HTML CENTRATO) ---
+        // --- 7. UPLOAD MEDIA (LOGICA MULTIPLA + NOMI) ---
+        // Listener per input file (multiplo)
         document.getElementById('modal-file-input').addEventListener('change', async (e) => {
-            if(e.target.files[0]) await uploadMedia(e.target.files[0]);
-            e.target.value = '';
+            if(e.target.files.length > 0) {
+                for (const file of e.target.files) {
+                    await handleFileUploadLogic(file, false);
+                }
+                e.target.value = ''; // Reset
+                closeModal('media-modal');
+            }
         });
-        async function uploadMedia(file) {
+
+        // Logica unificata di upload
+        async function handleFileUploadLogic(file, isPaste) {
             const creds = getCreds();
             if (!creds.token) return showStatus("Manca Token", 'error');
             const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            const name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-            const target = base + name;
-            loading(true, "Upload...");
+            
+            // Gestione Nome File
+            let cleanName = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+            
+            // Se è incollato ed è generico (image.png), usa timestamp
+            if (isPaste && (cleanName === 'image.png' || cleanName === 'Unknown.png')) {
+                cleanName = "screenshot_" + new Date().getTime() + ".png";
+            }
+            // Altrimenti mantiene il nome originale (pulito)
+
+            const target = base + cleanName;
+            
+            loading(true, "Upload " + cleanName + "...");
             try {
                 const buf = await file.arrayBuffer();
                 let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${target}`;
+                
                 const resp = await fetch(url, {
                     method: 'PUT',
                     headers: { 'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: `Upload media`, content: btoa(bin) })
                 });
-                if (!resp.ok) throw new Error("Errore Upload");
+                
+                if (!resp.ok) throw new Error("Errore Upload: " + cleanName);
+                
                 const relPath = '/' + target.replace('docs/public/', ''); 
                 
-                // Generazione HTML Centrato come richiesto
+                // Generazione HTML Centrato
                 let tag = file.type.startsWith('video/') 
                     ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` 
-                    : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
+                    : `\n<center>\n\t<img src="${relPath}" alt="${cleanName}" width="300"/>\n</center>\n`;
                 
                 const s = input.selectionStart;
                 input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
+                
+                // Aggiorna anteprima e cursore
                 renderPreview();
-                showStatus("Caricato: " + name);
-                closeModal('media-modal');
-            } catch (err) { showStatus(err.message, 'error'); } 
-            finally { loading(false); }
+                showStatus("Caricato: " + cleanName);
+                
+            } catch (err) { 
+                showStatus(err.message, 'error'); 
+            } finally { 
+                loading(false); 
+            }
         }
 
         // --- 8. FILE MANAGER (SEARCH) ---
