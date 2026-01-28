@@ -156,7 +156,7 @@
                     <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
                     <div class="pointer-events-none group-hover:scale-105 transition-transform">
                         <div class="text-5xl mb-3">📤</div>
-                        <span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span>
+                        <span class="font-bold text-gray-600 block">Trascina o Scegli (Multiplo)</span>
                     </div>
                 </div>
                 <p class="text-center text-xs text-gray-400">💡 Puoi anche incollare (Ctrl+V) o trascinare più file insieme!</p>
@@ -315,7 +315,6 @@
         // GESTIONE ANTEPRIMA PULITA (SENZA FRONTMATTER)
         async function renderPreview() {
             // Rimuovi Frontmatter (YAML) solo per l'anteprima
-            // La regex supporta spazi prima dei trattini
             const content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
             
             preview.innerHTML = marked.parse(content);
@@ -424,7 +423,7 @@ image: ${document.getElementById('meta-image').value}
             input.value = t; renderPreview(); closeModal('meta-modal'); showStatus("Intestazione Creata");
         }
 
-        // --- 7. UPLOAD MEDIA (LOGICA MULTIPLA + NOMI) ---
+        // --- 7. UPLOAD MEDIA (LOGICA MULTIPLA + NOMI + AUTO COPERTINA) ---
         // Listener per input file (multiplo)
         document.getElementById('modal-file-input').addEventListener('change', async (e) => {
             if(e.target.files.length > 0) {
@@ -469,6 +468,9 @@ image: ${document.getElementById('meta-image').value}
                 
                 const relPath = '/' + target.replace('docs/public/', ''); 
                 
+                // AUTO-IMPOSTA COPERTINA
+                document.getElementById('meta-image').value = relPath;
+
                 // Generazione HTML Centrato
                 let tag = file.type.startsWith('video/') 
                     ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` 
@@ -479,7 +481,7 @@ image: ${document.getElementById('meta-image').value}
                 
                 // Aggiorna anteprima e cursore
                 renderPreview();
-                showStatus("Caricato: " + cleanName);
+                showStatus("Caricato & Copertina Impostata!");
                 
             } catch (err) { 
                 showStatus(err.message, 'error'); 
