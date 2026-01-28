@@ -8,17 +8,12 @@
     <meta name="theme-color" content="#3b82f6">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            svg: { fontCache: 'global' },
-            startup: {
-                ready: () => {
-                    MathJax.startup.defaultReady();
-                }
-            }
+            svg: { fontCache: 'global' }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -33,13 +28,11 @@
         body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
         textarea { resize: none; outline: none; transition: all 0.2s; }
-        
-        /* Modal Styles */
         .modal { transition: opacity 0.2s ease-in-out; }
         .modal.hidden { opacity: 0; pointer-events: none; }
         .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
 
-        /* Preview Styles */
+        /* Typography & Preview */
         .prose { padding-bottom: 5rem; }
         .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
         .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
@@ -54,19 +47,15 @@
         .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .prose a { color: #2563eb; text-decoration: underline; }
 
-        /* Custom Admonitions */
+        /* Custom Box */
         .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
         .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
         .tip { border-color: #10b981; background-color: #ecfdf5; }
         .warning { border-color: #f59e0b; background-color: #fffbeb; }
         .danger { border-color: #ef4444; background-color: #fef2f2; }
         .info { border-color: #3b82f6; background-color: #eff6ff; }
-
-        mjx-container { outline: none !important; }
-
-        .fmt-btn {
-            @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center;
-        }
+        
+        .fmt-btn { @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
@@ -74,21 +63,21 @@
     <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
         <div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
             <div class="flex items-center gap-2">
-                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline" title="Strumenti Webmaster">🛠️</a>
-                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200 transition">📝 Dati</button>
-                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200 transition">📷 Media</button>
-                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200 transition">📂 File</button>
+                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline">🛠️</a>
+                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
+                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200">📷 Media</button>
+                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200">📂 File</button>
             </div>
 
-            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-purple-200 hover:bg-purple-200 transition ml-auto">👁️ Anteprima</button>
+            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold ml-auto">👁️ Anteprima</button>
 
             <div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
                 <div class="flex items-center gap-2">
                     <div class="flex">
                         <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
-                        <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica">📂</button>
+                        <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r">📂</button>
                     </div>
-                    <button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded ml-2" title="Forza aggiornamento anteprima">🔄 Aggiorna</button>
+                    <button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded shadow ml-2 transition">🔄 Aggiorna</button>
                 </div>
             </div>
             
@@ -186,27 +175,7 @@
         const preview = document.getElementById('preview-output');
         const editorCol = document.getElementById('editor-col');
         
-        // --- 1. CONFIG MARKDOWN (FIX ERRORE REDNERING) ---
-        if(typeof marked !== 'undefined') {
-            marked.use({
-                renderer: {
-                    paragraph(text) {
-                        // FIX: Controllo che text sia una stringa per evitare crash "startsWith is not a function"
-                        const t = String(text); 
-                        if (t.startsWith(':::')) {
-                            const type = t.match(/^::: (\w+)/)?.[1] || 'info';
-                            const content = t.replace(/^::: \w+.*\n/, '').replace(/\n:::$/, '');
-                            const title = t.match(/^::: \w+ (.*)/)?.[1] || type.toUpperCase();
-                            return `<div class="custom-block ${type}"><span class="custom-block-title">${title}</span>${content}</div>`;
-                        }
-                        return `<p>${text}</p>`;
-                    }
-                }
-            });
-            marked.setOptions({ breaks: true, gfm: true });
-        }
-
-        // --- EVENTS ---
+        // --- 1. INIT & EVENTS ---
         window.addEventListener('load', () => {
             ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
@@ -252,42 +221,55 @@
             }
         });
 
-        // --- PREVIEW LOGIC (RIPARATA) ---
+        // --- 2. LOGICA ANTEPRIMA (RIPARATA) ---
+        // Funzione per preprocessare i box colorati (::: tip) PRIMA di Marked
+        // Questo risolve i crash delle nuove versioni di marked.js
+        function preProcessMarkdown(text) {
+            // Regex per trovare blocchi ::: tipo ... :::
+            // Sostituisce con <div class="custom-block type"><span...>TITLE</span>content</div>
+            return text.replace(/^::: (\w+) (.*)\n([\s\S]*?)\n:::$/gm, (match, type, title, content) => {
+                return `<div class="custom-block ${type}"><span class="custom-block-title">${title || type.toUpperCase()}</span>\n${content}\n</div>`;
+            });
+        }
+
         async function renderPreview() {
             if (typeof marked === 'undefined') {
-                preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Librerie non caricate (Offline?). Connettiti a internet.</div>`;
+                preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Attendere caricamento librerie...</div>`;
                 return;
             }
 
-            // Rimuovi Frontmatter
-            const content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
+            // 1. Rimuovi Frontmatter (YAML)
+            let content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
             
+            // 2. Pre-processa i box colorati
+            content = preProcessMarkdown(content);
+
             try {
-                // Parsing Markdown
+                // 3. Converti Markdown -> HTML
                 preview.innerHTML = marked.parse(content);
                 
-                // MathJax Safe Call
+                // 4. Formule (MathJax)
                 if (window.MathJax && window.MathJax.typesetPromise) {
-                    MathJax.typesetPromise([preview]).catch((err) => console.log("MathJax error (non bloccante):", err));
+                    MathJax.typesetPromise([preview]).catch(() => {});
                 }
 
-                // Mermaid Safe Call
+                // 5. Diagrammi (Mermaid)
                 if (window.mermaid) {
                     const graphs = document.querySelectorAll('.language-mermaid');
                     graphs.forEach(async (graph, index) => {
                         try {
                             const { svg } = await window.mermaid.render('mermaid-' + index, graph.innerText);
                             graph.parentElement.innerHTML = svg;
-                        } catch (e) { console.log("Mermaid error:", e); }
+                        } catch (e) { console.log("Mermaid:", e); }
                     });
                 }
             } catch (e) {
-                console.error("Render fatal error:", e);
-                preview.innerHTML += `<div class="text-red-500 text-xs mt-2">Errore Rendering: ${e.message}</div>`;
+                console.error(e);
+                preview.innerHTML += `<div class="text-red-500 text-xs mt-2">Errore Render: ${e.message}</div>`;
             }
         }
 
-        // --- TOOLBAR FUNCTIONS ---
+        // --- TOOLBAR ---
         function fmt(s, e) {
             const start = input.selectionStart;
             const end = input.selectionEnd;
@@ -298,45 +280,22 @@
             input.focus();
             renderPreview();
         }
-
-        function insertTemplate() {
-            fmt(`\n### INTRODUZIONE TEORICA\nConcetto...\n\n### MONTAGGIO (Tinkercad)\n#### 1. Componenti\n* 1x **Micro:bit**\n\n#### 2. Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n### CODICE\n...\n`, '');
-        }
-
-        function insertYouTube() {
-            const u = prompt("Link YouTube:"); if(!u) return;
-            let v = u.split('v=')[1] || u.split('/').pop(); v = v.split('&')[0];
-            fmt(`\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="https://www.youtube.com/embed/${v}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>\n`, '');
-        }
+        function insertTemplate() { fmt(`\n### INTRODUZIONE TEORICA\nConcetto...\n\n### MONTAGGIO (Tinkercad)\n#### 1. Componenti\n* 1x **Micro:bit**\n\n#### 2. Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n### CODICE\n...\n`, ''); }
+        function insertYouTube() { const u = prompt("Link YouTube:"); if(!u) return; let v = u.split('v=')[1] || u.split('/').pop(); v = v.split('&')[0]; fmt(`\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="https://www.youtube.com/embed/${v}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>\n`, ''); }
         function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
 
-        // --- UTILS & API ---
+        // --- UTILS ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
         function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
         function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
-        function showStatus(msg, type='success') {
-            const el = document.getElementById('status-msg');
-            el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded shadow flex gap-3":"bg-emerald-600 text-white px-4 py-3 rounded shadow flex gap-3";
-            document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅';
-            document.getElementById('status-text').innerText = msg;
-            el.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000);
-        }
+        function showStatus(msg, type='success') { const el = document.getElementById('status-msg'); el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded shadow flex gap-3":"bg-emerald-600 text-white px-4 py-3 rounded shadow flex gap-3"; document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅'; document.getElementById('status-text').innerText = msg; el.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000); }
         function loading(s, m="") { const el=document.getElementById('loading-overlay'); if(s){document.getElementById('loading-msg').innerText=m; el.classList.remove('hidden');}else{el.classList.add('hidden');} }
-        function toggleMobileView() {
-            const btn = document.getElementById('mobile-toggle-btn');
-            if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; }
-            else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; }
-        }
+        function toggleMobileView() { const btn = document.getElementById('mobile-toggle-btn'); if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; } else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; } }
 
-        // --- METADATA & UPLOAD ---
-        function autoUpdateFilename() {
-            const t = document.getElementById('meta-title').value;
-            const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
-            document.getElementById('gh-path').value = `docs/blog/${slug}.md`;
-        }
+        // --- METADATA ---
+        function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); document.getElementById('gh-path').value = `docs/blog/${slug}.md`; }
         function applyMetadata() {
             const title = document.getElementById('meta-title').value;
             const safeDesc = document.getElementById('meta-desc').value.replace(/'/g, "''");
@@ -361,35 +320,27 @@ image: ${img}
         }
 
         // --- UPLOAD ---
-        document.getElementById('modal-file-input').addEventListener('change', async (e) => {
-            if(e.target.files.length) { for(const f of e.target.files) await handleFileUploadLogic(f, false); e.target.value=''; closeModal('media-modal'); }
-        });
-
+        document.getElementById('modal-file-input').addEventListener('change', async (e) => { if(e.target.files.length) { for(const f of e.target.files) await handleFileUploadLogic(f, false); e.target.value=''; closeModal('media-modal'); } });
         async function handleFileUploadLogic(file, isPaste) {
-            const creds = getCreds();
-            if (!creds.token) return showStatus("Manca Token", 'error');
+            const creds = getCreds(); if (!creds.token) return showStatus("Manca Token", 'error');
             const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
             let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
             if (isPaste && (name==='image.png'||name==='Unknown.png')) name = "screenshot_" + Date.now() + ".png";
-            
             loading(true, "Upload " + name);
             try {
-                const buf = await file.arrayBuffer();
-                let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
+                const buf = await file.arrayBuffer(); let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${base + name}`;
                 const res = await fetch(url, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({message: "Upload media", content: btoa(bin)}) });
                 if(!res.ok) throw new Error("Err Upload");
                 const relPath = '/' + (base + name).replace('docs/public/', '');
-                document.getElementById('meta-image').value = relPath;
+                document.getElementById('meta-image').value = relPath; // AUTO COVER
                 let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
-                const s = input.selectionStart;
-                input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
-                renderPreview();
-                showStatus("Fatto!");
+                const s = input.selectionStart; input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
+                renderPreview(); showStatus("Fatto!");
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
-        // --- FILE MANAGER & GITHUB SYNC (Semplificato) ---
+        // --- FILE MANAGER & LOAD/SAVE ---
         let fmPathCur = '';
         function openFileManager() { fmNavigate(document.getElementById('gh-img-base').value || ''); openModal('file-modal'); }
         function fmFilter() { const q = document.getElementById('fm-search').value.toLowerCase(); document.querySelectorAll('#fm-list > div').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
@@ -400,12 +351,10 @@ image: ${img}
             try {
                 const res = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}?t=${Date.now()}`, { headers: {'Authorization': `token ${creds.token}`} });
                 if(!res.ok) throw new Error("Dir not found");
-                const data = await res.json();
-                if(!Array.isArray(data)) throw new Error("Err Data");
+                const data = await res.json(); if(!Array.isArray(data)) throw new Error("Err Data");
                 list.innerHTML = '';
                 data.sort((a,b)=>(a.type===b.type)?0:(a.type==='dir'?-1:1)).forEach(i => {
-                    const isD = i.type === 'dir';
-                    const div = document.createElement('div');
+                    const isD = i.type === 'dir'; const div = document.createElement('div');
                     div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isD ? 'bg-indigo-50' : 'bg-white'}`;
                     div.innerHTML = `<div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}"><span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span><span class="text-sm truncate">${i.name}</span></div><div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
                     list.appendChild(div);
@@ -419,7 +368,7 @@ image: ${img}
         async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
         async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
         async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
-        async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); input.dispatchEvent(new Event('input')); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
+        async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); renderPreview(); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
         async function syncTextToGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true; try { let sha = null; try { const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}}); if(r.ok) sha=(await r.json()).sha; } catch(e){} const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { method: 'PUT', headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: sha ? `Update ${p}` : `Create ${p}`, content: b64EncodeUnicode(input.value), sha: sha || undefined }) }); if(!res.ok) throw new Error("Err Save"); localStorage.removeItem('autosave_draft'); showStatus("Salvato!"); } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; } }
     </script>
 </body>
