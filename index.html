@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proflama Editor Ultimate</title>
+    <title>Proflama Editor Stable</title>
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="theme-color" content="#3b82f6">
 
@@ -17,8 +17,6 @@
             startup: {
                 ready: () => {
                     MathJax.startup.defaultReady();
-                    // Forza un refresh quando MathJax è pronto
-                    if(typeof renderPreview === 'function') renderPreview(); 
                 }
             }
         };
@@ -90,11 +88,12 @@
                         <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
                         <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r" title="Carica">📂</button>
                     </div>
-                    <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline">0 parole</span>
+                    <button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded ml-2" title="Forza aggiornamento anteprima">🔄 Aggiorna</button>
                 </div>
             </div>
             
             <div class="flex items-center gap-2 ml-auto sm:ml-2">
+                <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
                 <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
                 <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
             </div>
@@ -103,76 +102,37 @@
 
     <div id="meta-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-blue-50 p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3>
-                <button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button>
-            </div>
+            <div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
             <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
                 <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
                 <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label>
-                        <select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label>
-                        <div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2">
-                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label>
-                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label>
-                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label>
-                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label>
-                            <label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label>
-                        </div>
-                    </div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
+                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div>
-                </div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina (Auto)</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
-                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci Intestazione</button>
+                <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
+                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
             </div>
         </div>
     </div>
-
     <div id="media-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-amber-50 p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3>
-                <button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button>
-            </div>
+            <div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3><button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
             <div class="p-6 space-y-6">
-                <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border">
-                    <span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span>
-                    <input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono">
-                </div>
+                <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border"><span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span><input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono"></div>
                 <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition relative bg-white group">
                     <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
-                    <div class="pointer-events-none group-hover:scale-105 transition-transform">
-                        <div class="text-5xl mb-3">📤</div>
-                        <span class="font-bold text-gray-600 block">Trascina o Scegli (Multiplo)</span>
-                    </div>
+                    <div class="pointer-events-none group-hover:scale-105 transition-transform"><div class="text-5xl mb-3">📤</div><span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span></div>
                 </div>
-                <p class="text-center text-xs text-gray-400">💡 Copertina impostata in automatico all'upload!</p>
                 <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
             </div>
         </div>
     </div>
-
     <div id="file-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg">📂 File Manager</h3>
-                <button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
-            </div>
-            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b flex-wrap">
-                <button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm hover:bg-gray-50">⬆️</button>
-                <input type="text" id="fm-search" oninput="fmFilter()" placeholder="🔍 Cerca..." class="border rounded px-2 py-1 text-sm w-32 focus:w-48 transition-all outline-none">
-                <input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly>
-                <button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button>
-                <button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button>
-            </div>
+            <div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg">📂 File Manager</h3><button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button></div>
+            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b flex-wrap"><button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm">⬆️</button><input type="text" id="fm-search" oninput="fmFilter()" placeholder="🔍 Cerca..." class="border rounded px-2 py-1 text-sm w-32 focus:w-48 transition-all outline-none"><input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly><button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button><button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button></div>
             <div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start"></div>
         </div>
     </div>
@@ -204,7 +164,7 @@
                 <button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
                 <button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
             </div>
-            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Caricamento librerie... se non vedi nulla, attendi o ricarica."></textarea>
+            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Caricamento librerie..."></textarea>
         </div>
 
         <div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
@@ -226,15 +186,17 @@
         const preview = document.getElementById('preview-output');
         const editorCol = document.getElementById('editor-col');
         
-        // --- CONFIG MARKDOWN ---
+        // --- 1. CONFIG MARKDOWN (FIX ERRORE REDNERING) ---
         if(typeof marked !== 'undefined') {
             marked.use({
                 renderer: {
                     paragraph(text) {
-                        if (text.startsWith(':::')) {
-                            const type = text.match(/^::: (\w+)/)?.[1] || 'info';
-                            const content = text.replace(/^::: \w+.*\n/, '').replace(/\n:::$/, '');
-                            const title = text.match(/^::: \w+ (.*)/)?.[1] || type.toUpperCase();
+                        // FIX: Controllo che text sia una stringa per evitare crash "startsWith is not a function"
+                        const t = String(text); 
+                        if (t.startsWith(':::')) {
+                            const type = t.match(/^::: (\w+)/)?.[1] || 'info';
+                            const content = t.replace(/^::: \w+.*\n/, '').replace(/\n:::$/, '');
+                            const title = t.match(/^::: \w+ (.*)/)?.[1] || type.toUpperCase();
                             return `<div class="custom-block ${type}"><span class="custom-block-title">${title}</span>${content}</div>`;
                         }
                         return `<p>${text}</p>`;
@@ -244,7 +206,7 @@
             marked.setOptions({ breaks: true, gfm: true });
         }
 
-        // --- INIT & EVENTS ---
+        // --- EVENTS ---
         window.addEventListener('load', () => {
             ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
                 const saved = localStorage.getItem('my_' + id);
@@ -253,7 +215,6 @@
             });
             document.getElementById('meta-date').valueAsDate = new Date();
             
-            // Recupero Bozza
             const savedDraft = localStorage.getItem('autosave_draft');
             if (savedDraft && savedDraft.length > 10) {
                 if(confirm("Bozza trovata. Recuperare?")) {
@@ -261,7 +222,7 @@
                     renderPreview();
                 }
             } else {
-                renderPreview(); // Init anche vuoto
+                renderPreview();
             }
         });
 
@@ -291,7 +252,7 @@
             }
         });
 
-        // --- CORE PREVIEW LOGIC (SAFE MODE) ---
+        // --- PREVIEW LOGIC (RIPARATA) ---
         async function renderPreview() {
             if (typeof marked === 'undefined') {
                 preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Librerie non caricate (Offline?). Connettiti a internet.</div>`;
@@ -302,11 +263,12 @@
             const content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
             
             try {
+                // Parsing Markdown
                 preview.innerHTML = marked.parse(content);
                 
                 // MathJax Safe Call
                 if (window.MathJax && window.MathJax.typesetPromise) {
-                    MathJax.typesetPromise([preview]).catch((err) => console.log("MathJax error:", err));
+                    MathJax.typesetPromise([preview]).catch((err) => console.log("MathJax error (non bloccante):", err));
                 }
 
                 // Mermaid Safe Call
@@ -316,22 +278,21 @@
                         try {
                             const { svg } = await window.mermaid.render('mermaid-' + index, graph.innerText);
                             graph.parentElement.innerHTML = svg;
-                        } catch (e) { console.log(e); }
+                        } catch (e) { console.log("Mermaid error:", e); }
                     });
                 }
             } catch (e) {
-                console.error("Render error:", e);
+                console.error("Render fatal error:", e);
                 preview.innerHTML += `<div class="text-red-500 text-xs mt-2">Errore Rendering: ${e.message}</div>`;
             }
         }
 
-        // --- TOOLBAR ---
+        // --- TOOLBAR FUNCTIONS ---
         function fmt(s, e) {
             const start = input.selectionStart;
             const end = input.selectionEnd;
             const val = input.value;
-            const sel = val.substring(start, end);
-            const r = s + sel + e;
+            const r = s + val.substring(start, end) + e;
             input.value = val.substring(0, start) + r + val.substring(end);
             input.selectionStart = input.selectionEnd = start + r.length;
             input.focus();
@@ -349,7 +310,7 @@
         }
         function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
 
-        // --- UTILS ---
+        // --- UTILS & API ---
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
@@ -370,7 +331,7 @@
             else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; }
         }
 
-        // --- METADATA ---
+        // --- METADATA & UPLOAD ---
         function autoUpdateFilename() {
             const t = document.getElementById('meta-title').value;
             const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-');
@@ -382,7 +343,6 @@
             const checked = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(c=>c.value);
             const target = checked.length > 0 ? checked.join(', ') : 'Tutti';
             const img = document.getElementById('meta-image').value;
-            
             const t = `---
 title: ${title}
 description: '${safeDesc}'
@@ -419,30 +379,20 @@ image: ${img}
                 const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${base + name}`;
                 const res = await fetch(url, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({message: "Upload media", content: btoa(bin)}) });
                 if(!res.ok) throw new Error("Err Upload");
-                
                 const relPath = '/' + (base + name).replace('docs/public/', '');
-                
-                // AUTO LINK COPERTINA
                 document.getElementById('meta-image').value = relPath;
-                
-                let tag = file.type.startsWith('video/') 
-                    ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` 
-                    : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
-                
+                let tag = file.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
                 const s = input.selectionStart;
                 input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview();
-                showStatus("Caricato e Copertina Aggiornata!");
+                showStatus("Fatto!");
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
         }
 
-        // --- FILE MANAGER ---
+        // --- FILE MANAGER & GITHUB SYNC (Semplificato) ---
         let fmPathCur = '';
         function openFileManager() { fmNavigate(document.getElementById('gh-img-base').value || ''); openModal('file-modal'); }
-        function fmFilter() {
-            const q = document.getElementById('fm-search').value.toLowerCase();
-            document.querySelectorAll('#fm-list > div').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none');
-        }
+        function fmFilter() { const q = document.getElementById('fm-search').value.toLowerCase(); document.querySelectorAll('#fm-list > div').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
         async function fmNavigate(p) {
             p = p.replace(/^\/|\/$/g, ''); fmPathCur = p; document.getElementById('fm-path').value = p;
             const creds = getCreds(); const list = document.getElementById('fm-list');
@@ -457,12 +407,7 @@ image: ${img}
                     const isD = i.type === 'dir';
                     const div = document.createElement('div');
                     div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isD ? 'bg-indigo-50' : 'bg-white'}`;
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}">
-                            <span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span>
-                            <span class="text-sm truncate">${i.name}</span>
-                        </div>
-                        <div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
+                    div.innerHTML = `<div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}"><span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span><span class="text-sm truncate">${i.name}</span></div><div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
                     list.appendChild(div);
                 });
             } catch(e) { list.innerHTML = `<p class="text-red-500 col-span-full">${e.message}</p>`; }
@@ -470,64 +415,12 @@ image: ${img}
         function fmUp() { if(fmPathCur) fmNavigate(fmPathCur.split('/').slice(0,-1).join('/')); }
         function fmRefresh() { fmNavigate(fmPathCur); }
         function fmSelectFile(p) { if(p.endsWith('.md') && confirm("Aprire?")) { document.getElementById('gh-path').value = p; closeModal('file-modal'); loadFromGitHub(); } }
-        async function fmCreateFolder() {
-            const n = prompt("Nome:"); if(!n) return;
-            apiCall('PUT', (fmPathCur?fmPathCur+'/':'')+n+'/.keep', {message:"New Folder", content:""}, ()=>fmRefresh());
-        }
+        async function fmCreateFolder() { const n = prompt("Nome:"); if(!n) return; apiCall('PUT', (fmPathCur?fmPathCur+'/':'')+n+'/.keep', {message:"New Folder", content:""}, ()=>fmRefresh()); }
         async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
-        async function fmRename(p,s,t) {
-            if(t==='dir') return alert("No dir rename");
-            const n = prompt("New Name:", p.split('/').pop()); if(!n) return;
-            const creds = getCreds(); loading(true);
-            try {
-                const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}});
-                const d = await g.json();
-                await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content});
-                await apiCall('DELETE', p, {message:"Del Old", sha:s});
-                fmRefresh();
-            } catch(e){alert(e);} finally{loading(false);}
-        }
-        async function apiCall(m, p, b, cb) {
-            const c = getCreds(); loading(true);
-            try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);}
-        }
-
-        // --- LOAD/SAVE ---
-        async function loadFromGitHub() {
-            const c = getCreds(); const p = document.getElementById('gh-path').value.trim();
-            if(!c.token) return showStatus("No Token", 'error');
-            loading(true, "Download...");
-            try {
-                const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}});
-                if(!res.ok) throw new Error("404");
-                input.value = b64DecodeUnicode((await res.json()).content);
-                // FORCE UPDATE PREVIEW
-                input.dispatchEvent(new Event('input'));
-                showStatus("Caricato!");
-            } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);}
-        }
-
-        async function syncTextToGitHub() {
-            const c = getCreds(); const p = document.getElementById('gh-path').value.trim();
-            if(!c.token) return showStatus("No Token", 'error');
-            const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true;
-            try {
-                let sha = null;
-                try { const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}}); if(r.ok) sha=(await r.json()).sha; } catch(e){}
-                const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {
-                    method: 'PUT',
-                    headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        message: sha ? `Update ${p}` : `Create ${p}`,
-                        content: b64EncodeUnicode(input.value),
-                        sha: sha || undefined
-                    })
-                });
-                if(!res.ok) throw new Error("Err Save");
-                localStorage.removeItem('autosave_draft');
-                showStatus("Salvato!");
-            } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; }
-        }
+        async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
+        async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
+        async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); input.dispatchEvent(new Event('input')); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
+        async function syncTextToGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true; try { let sha = null; try { const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}}); if(r.ok) sha=(await r.json()).sha; } catch(e){} const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { method: 'PUT', headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: sha ? `Update ${p}` : `Create ${p}`, content: b64EncodeUnicode(input.value), sha: sha || undefined }) }); if(!res.ok) throw new Error("Err Save"); localStorage.removeItem('autosave_draft'); showStatus("Salvato!"); } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; } }
     </script>
 </body>
 </html>
