@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proflama Editor Stable</title>
     <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -370,6 +371,19 @@ image: ${img}
         async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
         async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); renderPreview(); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
         async function syncTextToGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true; try { let sha = null; try { const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}}); if(r.ok) sha=(await r.json()).sha; } catch(e){} const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { method: 'PUT', headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: sha ? `Update ${p}` : `Create ${p}`, content: b64EncodeUnicode(input.value), sha: sha || undefined }) }); if(!res.ok) throw new Error("Err Save"); localStorage.removeItem('autosave_draft'); showStatus("Salvato!"); } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; } }
+    </script>
+    </script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrato: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Errore ServiceWorker: ', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
