@@ -17,7 +17,7 @@
         
         /* Barra degli strumenti */
         #toolbar { height: 50px; background-color: #1e293b; color: #fff; display: flex; align-items: center; padding: 0 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10; overflow-x: auto; white-space: nowrap; }
-        #toolbar::-webkit-scrollbar { display: none; } /* Nasconde scrollbar su mobile */
+        #toolbar::-webkit-scrollbar { display: none; }
         #toolbar .title { font-weight: bold; font-size: 16px; margin-right: auto; display: flex; align-items: center; gap: 8px; }
         
         .status-badge { font-size: 11px; background-color: #059669; padding: 2px 6px; border-radius: 12px; font-weight: normal; opacity: 0; transition: opacity 0.3s; }
@@ -25,7 +25,7 @@
         .btn:hover { background-color: #2563eb; }
         .btn-red { background-color: #ef4444; }
         .btn-red:hover { background-color: #dc2626; }
-        .btn-purple { background-color: #8b5cf6; display: none; } /* Nascosto di default su PC */
+        .btn-purple { background-color: #8b5cf6; display: none; }
         .btn-purple:hover { background-color: #7c3aed; }
 
         /* Contenitore principale */
@@ -37,14 +37,20 @@
         #preview { padding: 30px 40px; background-color: #ffffff; color: #334155; line-height: 1.7; }
         
         /* Formattazione Markdown */
-        #preview h1, #preview h2, #preview h3 { color: #0f172a; margin-top: 1.5em; margin-bottom: 0.5em; }
+        #preview h1, #preview h2, #preview h3 { color: #0f172a; margin-top: 1.5em; margin-bottom: 0.5em; page-break-after: avoid; }
         #preview h1 { border-bottom: 2px solid #e2e8f0; padding-bottom: 0.3em; }
         #preview a { color: #3b82f6; text-decoration: none; }
         #preview a:hover { text-decoration: underline; }
         #preview ul, #preview ol { margin-bottom: 1.2em; padding-left: 2em; }
-        #preview blockquote { border-left: 4px solid #cbd5e1; color: #64748b; padding-left: 1em; margin-left: 0; font-style: italic; }
+        #preview blockquote { border-left: 4px solid #cbd5e1; color: #64748b; padding-left: 1em; margin-left: 0; font-style: italic; page-break-inside: avoid; }
         #preview code:not(.hljs) { background-color: #f1f5f9; color: #e11d48; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
-        #preview pre { background-color: #282c34; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 1.5em; }
+        #preview pre { background-color: #282c34; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 1.5em; page-break-inside: avoid; }
+        
+        /* GESTIONE IMMAGINI */
+        #preview img { max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 1.5em 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); page-break-inside: avoid; }
+
+        /* Evitare tagli nei PDF per tabelle e liste */
+        #preview table, #preview tr, #preview li { page-break-inside: avoid; }
 
         /* Classe per nascondere elementi via JS */
         .hidden-mobile { display: none !important; }
@@ -53,8 +59,8 @@
         @media (max-width: 768px) {
             #editor, #preview { width: 100%; border-right: none; }
             #preview { padding: 20px; }
-            .btn-purple { display: inline-block; } /* Mostra il tasto Anteprima */
-            .title span:first-child { display: none; } /* Nasconde la scritta "LocalDown" per far spazio ai tasti */
+            .btn-purple { display: inline-block; }
+            .title span:first-child { display: none; }
         }
     </style>
 </head>
@@ -73,7 +79,7 @@
     </div>
     
     <div id="main-container">
-        <textarea id="editor" spellcheck="false" placeholder="Scrivi il tuo Markdown qui..."></textarea>
+        <textarea id="editor" spellcheck="false" placeholder="Scrivi il tuo Markdown qui... (Puoi incollare immagini col CTRL+V!)"></textarea>
         <div id="preview"></div>
     </div>
 
@@ -85,7 +91,13 @@
         let saveTimeout; 
         let isPreviewing = false;
 
-        marked.setOptions({ highlight: function(code, lang) { const language = hljs.getLanguage(lang) ? lang : 'plaintext'; return hljs.highlight(code, { language }).value; } });
+        marked.setOptions({ 
+            highlight: function(code, lang) { 
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext'; 
+                return hljs.highlight(code, { language }).value; 
+            },
+            breaks: true // Permette di andare a capo con un solo invio
+        });
         
         function updatePreview() { 
             try { preview.innerHTML = marked.parse(editor.value); } 
@@ -100,11 +112,39 @@
         }
         
         editor.addEventListener('input', () => { updatePreview(); triggerAutosave(); });
+
+        // GESTIONE INCOLLA IMMAGINI (Converte le immagini copiate in Base64 direttamente nell'editor)
+        editor.addEventListener('paste', function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let index in items) {
+                const item = items[index];
+                if (item.kind === 'file') {
+                    e.preventDefault(); // Blocca l'incolla di default se è un file
+                    const blob = item.getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const base64data = event.target.result;
+                        const imageMarkdown = `\n![Immagine incollata](${base64data})\n`;
+                        
+                        // Inserisce il testo Markdown alla posizione del cursore
+                        const cursorPosition = editor.selectionStart;
+                        editor.value = editor.value.substring(0, cursorPosition) + imageMarkdown + editor.value.substring(editor.selectionEnd);
+                        
+                        updatePreview();
+                        triggerAutosave();
+                        
+                        // Riposiziona il cursore dopo l'immagine
+                        editor.selectionStart = cursorPosition + imageMarkdown.length;
+                        editor.selectionEnd = cursorPosition + imageMarkdown.length;
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }
+        });
         
         // Gestione Visualizzazione Mobile vs Desktop
         function checkScreenSize() {
             if (window.innerWidth <= 768) {
-                // Su Mobile: forza la visualizzazione singola
                 if (isPreviewing) {
                     editor.classList.add('hidden-mobile');
                     preview.classList.remove('hidden-mobile');
@@ -113,13 +153,11 @@
                     preview.classList.add('hidden-mobile');
                 }
             } else {
-                // Su Desktop: mostra sempre entrambi
                 editor.classList.remove('hidden-mobile');
                 preview.classList.remove('hidden-mobile');
             }
         }
 
-        // Tasto Toggle (Alterna visuale su Mobile)
         function toggleMobileView() {
             isPreviewing = !isPreviewing;
             if (isPreviewing) {
@@ -138,14 +176,27 @@
         window.addEventListener('load', () => { 
             const saved = localStorage.getItem('proflama_local_draft'); 
             if (saved) { editor.value = saved; } 
-            else { editor.value = "# Appunti Offline\\n\\nScrivi qui.\\n\\n```cpp\\nvoid setup() {\\n  pinMode(13, OUTPUT);\\n}\\n```"; } 
+            else { editor.value = "# Appunti Offline\\n\\nScrivi qui oppure **incolla un'immagine (CTRL+V)**.\\n\\n```cpp\\nvoid setup() {\\n  pinMode(13, OUTPUT);\\n}\\n```"; } 
             updatePreview(); 
-            checkScreenSize(); // Imposta la vista corretta all'avvio
+            checkScreenSize(); 
         });
 
         function clearEditor() { if (confirm("Cancellare la bozza?")) { editor.value = ''; updatePreview(); triggerAutosave(); } }
         function downloadMarkdown() { const blob = new Blob([editor.value], { type: 'text/markdown' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bozza.md'; a.click(); }
-        function downloadPDF() { html2pdf().set({ margin: 15, filename: 'documento.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(preview).save(); }
+        
+        // PDF MIGLIORATO
+        function downloadPDF() { 
+            const element = document.getElementById('preview');
+            const opt = {
+                margin:       15,
+                filename:     'documento.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true }, // useCORS aiuta a renderizzare immagini esterne
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] } // Questa regola obbliga il rispetto dei page-break-inside del CSS
+            };
+            html2pdf().set(opt).from(element).save(); 
+        }
     </script>
 </body>
 </html>
