@@ -1,12 +1,13 @@
-const CACHE_NAME = 'md-editor-v4-fix'; // Ho cambiato nome per forzare l'aggiornamento
+const CACHE_NAME = 'md-editor-v5-fix'; // Cambia questo nome ad ogni release per forzare l'aggiornamento della PWA
 const ASSETS_TO_CACHE = [
     './',
-    './index.html',      // <--- QUI C'ERA L'ERRORE! Deve essere index.html
+    './index.html',
     './manifest.json',
     './icon.png',
     'https://cdn.tailwindcss.com',
-    'https://cdn.jsdelivr.net/npm/marked/marked.min.js',
-    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
+    'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js', // versione allineata a quella usata in index.html
+    'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+    'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs' // mancava: senza questo, i diagrammi non funzionano offline
 ];
 
 self.addEventListener('install', (event) => {
