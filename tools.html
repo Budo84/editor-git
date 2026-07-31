@@ -79,6 +79,7 @@
             <button onclick="generateIcons()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
                 📦 Genera e Scarica ZIP
             </button>
+            <p class="text-xs text-gray-400">Nota: i favicon generati sono in formato PNG (favicon-16x16.png, favicon-32x32.png), non .ico — è il formato supportato da tutti i browser moderni tramite &lt;link rel="icon"&gt;.</p>
         </div>
     </div>
 
@@ -109,6 +110,23 @@
                     <label class="text-xs font-bold text-gray-400 uppercase">Data</label>
                     <input type="date" id="meta-date" class="w-full border rounded px-3 py-2" onchange="updateMeta()">
                 </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Stato</label>
+                    <select id="meta-draft" class="w-full border rounded px-3 py-2" onchange="updateMeta()">
+                        <option value="false">Pubblico</option>
+                        <option value="true">Bozza</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase">Target Classe</label>
+                    <input type="text" id="meta-target" value="Tutti" placeholder="es. 1, 2, Elementari" class="w-full border rounded px-3 py-2" oninput="updateMeta()">
+                </div>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Copertina</label>
+                <input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm" oninput="updateMeta()">
             </div>
             <div class="bg-gray-800 text-gray-300 p-4 rounded-xl font-mono text-sm relative mt-4">
                 <button onclick="copyMeta()" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs rounded">Copia</button>
@@ -158,7 +176,7 @@
         function generateIcons() {
             const f = document.getElementById('icon-input').files[0];
             if(!f) return alert("Carica logo");
-            const sizes = [{w:192,n:"web-app-manifest-192x192.png"},{w:512,n:"web-app-manifest-512x512.png"},{w:180,n:"apple-touch-icon.png"},{w:32,n:"favicon.ico"}];
+            const sizes = [{w:192,n:"web-app-manifest-192x192.png"},{w:512,n:"web-app-manifest-512x512.png"},{w:180,n:"apple-touch-icon.png"},{w:32,n:"favicon-32x32.png"},{w:16,n:"favicon-16x16.png"}];
             const z = new JSZip();
             const r = new FileReader();
             r.onload = e => {
@@ -188,10 +206,11 @@
             const t = `---
 title: ${document.getElementById('meta-title').value}
 description: ${document.getElementById('meta-desc').value}
+draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
 category: ${document.getElementById('meta-cat').value}
-class_target: Tutti
-image: /img/default.jpg
+class_target: "${document.getElementById('meta-target').value}"
+image: ${document.getElementById('meta-image').value}
 ---`;
             document.getElementById('meta-output').innerText = t;
         }
