@@ -128,6 +128,10 @@
                 <label class="text-xs font-bold text-gray-400 uppercase">Copertina</label>
                 <input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm" oninput="updateMeta()">
             </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Durata Lezione (minuti)</label>
+                <input type="number" id="meta-duration" placeholder="es. 60" class="w-full border rounded px-3 py-2" oninput="updateMeta()">
+            </div>
             <div class="bg-gray-800 text-gray-300 p-4 rounded-xl font-mono text-sm relative mt-4">
                 <button onclick="copyMeta()" class="absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs rounded">Copia</button>
                 <pre id="meta-output">---...---</pre>
@@ -203,13 +207,14 @@
         // Meta Logic
         document.getElementById('meta-date').valueAsDate = new Date();
         function updateMeta() {
+            const duration = document.getElementById('meta-duration').value;
             const t = `---
 title: ${document.getElementById('meta-title').value}
 description: ${document.getElementById('meta-desc').value}
 draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
 category: ${document.getElementById('meta-cat').value}
-class_target: "${document.getElementById('meta-target').value}"
+class_target: "${document.getElementById('meta-target').value}"${duration ? `\nduration: ${duration}` : ''}
 image: ${document.getElementById('meta-image').value}
 ---`;
             document.getElementById('meta-output').innerText = t;
