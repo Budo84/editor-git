@@ -10,6 +10,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script>
         window.MathJax = {
@@ -86,6 +87,8 @@
             
             <div class="flex items-center gap-2 ml-auto sm:ml-2">
                 <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
+                <button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Esporta lezione in PDF">📄</button>
+                <button onclick="checkImages()" class="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition" title="Controlla immagini/link prima di pubblicare">🔍</button>
                 <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
                 <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
             </div>
@@ -104,6 +107,7 @@
                     <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase">Durata Lezione (minuti)</label><input type="number" id="meta-duration" placeholder="es. 60" class="w-full border rounded px-3 py-2"></div>
                 <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
                 <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
             </div>
@@ -164,6 +168,7 @@
                     <option value="scratch">🐱 Scratch</option>
                 </select>
                 <button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
+                <button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
                 <button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
                 <button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
             </div>
@@ -386,13 +391,14 @@
             const checked = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(c=>c.value);
             const target = checked.length > 0 ? checked.join(', ') : 'Tutti';
             const img = document.getElementById('meta-image').value;
+            const duration = document.getElementById('meta-duration').value;
             const t = `---
 title: ${title}
 description: '${safeDesc}'
 draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
 category: ${document.getElementById('meta-cat').value}
-class_target: "${target}"
+class_target: "${target}"${duration ? `\nduration: ${duration}` : ''}
 image: ${img}
 ---
 
@@ -462,6 +468,123 @@ image: ${img}
                 const s = input.selectionStart; input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
                 renderPreview(); showStatus("Fatto!" + (doCompress ? " (compresso in WebP)" : ""));
             } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+        }
+
+        // --- ESPORTAZIONE PDF (senza troncamenti strani) ---
+        async function exportPDF() {
+            if (typeof html2pdf === 'undefined') return showStatus("Libreria PDF non ancora caricata, riprova tra un istante", 'error');
+
+            // 1. Assicura che l'anteprima sia aggiornata (marked + MathJax + Mermaid)
+            await renderPreview();
+            // Piccola attesa per dare tempo a MathJax/Mermaid (asincroni) di completare il rendering
+            await new Promise(r => setTimeout(r, 500));
+
+            // 2. Estrae titolo/metadati dal front matter per intestazione e nome file
+            const fmMatch = input.value.match(/^---([\s\S]*?)---/);
+            let title = 'Lezione', category = '', target = '', duration = '';
+            if (fmMatch) {
+                const get = (key) => { const m = fmMatch[1].match(new RegExp(key + ':\\s*(.+)')); return m ? m[1].replace(/['"]/g, '').trim() : ''; };
+                title = get('title') || title;
+                category = get('category');
+                target = get('class_target');
+                duration = get('duration');
+            }
+            const subtitleParts = [category, target ? `Classe: ${target}` : '', duration ? `${duration} min` : ''].filter(Boolean);
+
+            // 3. Costruisce un contenitore "pulito" fuori schermo, con CSS dedicato alla stampa
+            //    (foglio A4, niente sfondo grigio dell'editor, e soprattutto le regole anti-troncamento)
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:190mm; background:#fff; color:#1e293b; font-family:sans-serif;';
+            wrapper.innerHTML = `
+                <style>
+                    .pdf-root { padding: 4mm; }
+                    .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
+                    .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+                    .pdf-root h1, .pdf-root h2, .pdf-root h3 {
+                        break-after: avoid; page-break-after: avoid; /* niente titoli isolati a fine pagina */
+                        break-inside: avoid; page-break-inside: avoid;
+                    }
+                    .pdf-root p, .pdf-root li { orphans: 3; widows: 3; }
+                    .pdf-root img {
+                        max-width: 100%;
+                        max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
+                        break-inside: avoid; page-break-inside: avoid;
+                        display: block; margin: 10px auto;
+                    }
+                    .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
+                        break-inside: avoid; page-break-inside: avoid;
+                    }
+                    .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; }
+                    .pdf-root th, .pdf-root td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+                    .pdf-root pre { background:#1f2937; color:#fff; padding:10px; border-radius:6px; font-size:11px; overflow-wrap: break-word; white-space: pre-wrap; }
+                    .pdf-root code { font-family: monospace; }
+                    .pdf-root .custom-block { border-left: 4px solid #3b82f6; background:#eff6ff; padding:10px; border-radius:6px; margin:10px 0; }
+                </style>
+                <div class="pdf-root">
+                    <h1>${title}</h1>
+                    ${subtitleParts.length ? `<div class="pdf-subtitle">${subtitleParts.join(' · ')}</div>` : ''}
+                    ${preview.innerHTML}
+                </div>`;
+            document.body.appendChild(wrapper);
+
+            const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+            const opt = {
+                margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
+                filename: `${fileSlug}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: {
+                    mode: ['css', 'legacy'],
+                    avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
+                }
+            };
+
+            loading(true, "Generazione PDF...");
+            try {
+                await html2pdf().set(opt).from(wrapper.querySelector('.pdf-root')).save();
+                showStatus("PDF generato!");
+            } catch (e) {
+                showStatus("Errore PDF: " + e.message, 'error');
+            } finally {
+                document.body.removeChild(wrapper);
+                loading(false);
+            }
+        }
+
+        // --- CONTROLLO IMMAGINI/LINK PRIMA DI PUBBLICARE ---
+        async function checkImages() {
+            const creds = getCreds();
+            if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
+
+            // Trova sia ![alt](percorso) markdown sia <img src="percorso">, ignorando URL esterni (http/https)
+            const mdImgs = [...input.value.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map(m => m[1]);
+            const htmlImgs = [...input.value.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1]);
+            const allPaths = [...new Set([...mdImgs, ...htmlImgs])].filter(p => !/^https?:\/\//i.test(p) && !p.startsWith('data:'));
+
+            if (allPaths.length === 0) return showStatus("Nessuna immagine locale da controllare");
+
+            loading(true, `Controllo ${allPaths.length} immagini...`);
+            const missing = [];
+            try {
+                await mapLimit(allPaths, 6, async (p) => {
+                    // Converte il percorso pubblico nel percorso reale nel repo (docs/public/...), gestendo sia /img/x.png sia img/x.png
+                    const repoPath = 'docs/public/' + p.replace(/^\//, '');
+                    try {
+                        const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${creds.token}` } });
+                        if (!r.ok) missing.push(p);
+                    } catch (e) { missing.push(p); }
+                });
+                if (missing.length === 0) {
+                    showStatus(`✅ Tutte le ${allPaths.length} immagini esistono nel repo`);
+                } else {
+                    showStatus(`⚠️ ${missing.length} immagine/i mancante/i su GitHub`, 'error');
+                    alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n"));
+                }
+            } finally {
+                loading(false);
+            }
         }
 
         // --- ELIMINA FILE CORRENTE (bottone header) ---
