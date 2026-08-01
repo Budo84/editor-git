@@ -154,6 +154,7 @@
                 <button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
                 <button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
                 <button onclick="insertMakeCode()" class="fmt-btn text-purple-600" title="Incorpora progetto MakeCode">🤖 MakeCode</button>
+                <button onclick="insertMblockLink()" class="fmt-btn text-cyan-600" title="Inserisci link progetto mBlock">🚙 mBlock</button>
                 <button onclick="insertTable()" class="fmt-btn">📊 Tab</button>
                 <div class="w-px h-4 bg-gray-300 mx-1"></div>
                 <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
@@ -166,6 +167,7 @@
                     <option value="microbit">🤖 Microbit / MakeCode</option>
                     <option value="arduino">🔌 Arduino</option>
                     <option value="scratch">🐱 Scratch</option>
+                    <option value="mbot">🚙 Mbot / mBlock</option>
                 </select>
                 <button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
                 <button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
@@ -306,7 +308,8 @@
             const templates = {
                 microbit: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Cosa facciamo se...?* -> ...\n\n## Fase 3: Scrittura del Codice 💻\n\nApriamo la categoria **...** nella Toolbox.\n\n| Sezione | Blocco | Istruzione e Funzione | Dove Inserire |\n|---|---|---|---|\n| | | | |\n\n`,
                 arduino: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Montaggio (Tinkercad) 🔌\n\n#### Componenti\n* 1x **Arduino Uno**\n* ...\n\n#### Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n## Fase 3: Scrittura del Codice 💻\n\n\`\`\`cpp\nvoid setup() {\n\n}\n\nvoid loop() {\n\n}\n\`\`\`\n\n`,
-                scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`
+                scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`,
+                mbot: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Collegamento e Sensori 🔌\n\n- Colleghiamo mBot al computer via **USB** / **Bluetooth**.\n- Sensori/attuatori usati in questa lezione: ...\n\n## Fase 3: Progettazione dello Pseudocodice 📝\n\n- *Se il sensore a ultrasuoni rileva un ostacolo...* -> ...\n\n## Fase 4: Costruzione degli Script su mBlock 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-mblock.png" alt="script mBlock" width="400"/>\n</center>\n\n::: info ℹ️ PROGETTO MBLOCK\nSe hai condiviso il progetto su [mBlock Community](https://ide.mblock.cc), incolla qui il link diretto.\n:::\n\n`
             };
             fmt(templates[type] || templates.microbit, '');
         }
@@ -317,6 +320,13 @@
             // Estrae l'ID del progetto dal link di condivisione, es. .../_AbCdEfGh -> AbCdEfGh
             const id = u.trim().split('/').pop().replace(/^_/, '');
             fmt(`\n<div style="position:relative;height:500px;width:100%;max-width:500px;margin:1em auto;"><iframe style="width:100%;height:100%;border:1px solid #cccccc;border-radius:8px;" src="https://makecode.microbit.org/#pub:${id}" allowfullscreen sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>\n`, '');
+        }
+        function insertMblockLink() {
+            const u = prompt("Incolla il link al progetto mBlock (es. https://ide.mblock.cc/...):");
+            if (!u) return;
+            // Nota: a differenza di MakeCode, mBlock/mblock.cc non offre un embed iframe ufficiale verificato,
+            // quindi qui inseriamo un link/pulsante invece di un iframe che potrebbe non caricarsi.
+            fmt(`\n<div style="text-align:center;margin:1em 0;"><a href="${u.trim()}" target="_blank" rel="noopener" style="display:inline-block;background:#0891b2;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">🚙 Apri il progetto mBlock</a></div>\n`, '');
         }
         function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
 
