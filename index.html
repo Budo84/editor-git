@@ -1,409 +1,423 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proflama Editor Stable</title>
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#3b82f6">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-src https://www.youtube.com https://makecode.microbit.org; font-src 'self' data: https://cdn.jsdelivr.net; worker-src 'self' blob:;">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <script>
-        window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
-            svg: { fontCache: 'global' }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: false });
-        window.mermaid = mermaid;
-    </script>
-
-    <style>
-        body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
-        textarea { resize: none; outline: none; transition: all 0.2s; }
-        .modal { transition: opacity 0.2s ease-in-out; }
-        .modal.hidden { opacity: 0; pointer-events: none; }
-        .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
-
-        /* Typography & Preview */
-        .prose { padding-bottom: 5rem; }
-        .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
-        .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
-        .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
-        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
-        .prose p { margin-bottom: 1em; line-height: 1.6; }
-        .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
-        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
-        .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
-        .prose pre code { background-color: transparent; color: inherit; padding: 0; }
-        .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .prose a { color: #2563eb; text-decoration: underline; }
-
-        /* Custom Box */
-        .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
-        .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
-        .tip { border-color: #10b981; background-color: #ecfdf5; }
-        .warning { border-color: #f59e0b; background-color: #fffbeb; }
-        .danger { border-color: #ef4444; background-color: #fef2f2; }
-        .info { border-color: #3b82f6; background-color: #eff6ff; }
-        
-        .fmt-btn { @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proflama Editor Stable</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: false });
+  window.mermaid = mermaid;
+</script>
+<style>
+  body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
+  textarea { resize: none; outline: none; transition: all 0.2s; }
+  .modal { transition: opacity 0.2s ease-in-out; }
+  .modal.hidden { opacity: 0; pointer-events: none; }
+  .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
+  /* Typography & Preview */
+  .prose { padding-bottom: 5rem; }
+  .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
+  .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
+  .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
+  .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+  .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+  .prose p { margin-bottom: 1em; line-height: 1.6; }
+  .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
+  .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
+  .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
+  .prose pre code { background-color: transparent; color: inherit; padding: 0; }
+  .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  .prose a { color: #2563eb; text-decoration: underline; }
+  /* Custom Box */
+  .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
+  .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
+  .tip { border-color: #10b981; background-color: #ecfdf5; }
+  .warning { border-color: #f59e0b; background-color: #fffbeb; }
+  .danger { border-color: #ef4444; background-color: #fef2f2; }
+  .info { border-color: #3b82f6; background-color: #eff6ff; }
+  .fmt-btn { @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center; }
+  /* Drag & Drop */
+  #markdown-input.drag-over { background-color: #eff6ff; outline: 3px dashed #3b82f6; outline-offset: -6px; }
+</style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
 
-    <header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
-        <div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
-            <div class="flex items-center gap-2">
-                <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline">🛠️</a>
-                <button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
-                <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200">📷 Media</button>
-                <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200">📂 File</button>
+<div id="update-banner" class="hidden fixed top-0 inset-x-0 z-[60] bg-indigo-600 text-white text-sm font-bold text-center py-2 px-4 flex items-center justify-center gap-3 shadow-lg">
+  <span>🔄 È disponibile una nuova versione dell'editor</span>
+  <button onclick="applyUpdate()" class="bg-white text-indigo-700 px-3 py-1 rounded-full text-xs font-bold hover:bg-indigo-50">Aggiorna ora</button>
+  <button onclick="dismissUpdateBanner()" class="text-indigo-100 hover:text-white text-lg leading-none" title="Ignora per ora">&times;</button>
+</div>
 
-                <a href="offline-editor/markbud.html" target="_blank" class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-teal-200 hover:bg-teal-100 transition no-underline" title="Apri Editor Offline">💻 Offline</a>
-            </div>
+<header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
+<div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
+<div class="flex items-center gap-2">
+<a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline">🛠️</a>
+<button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
+<button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200">📷 Media</button>
+<button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200">📂 File</button>
+<a href="offline-editor/markbud.html" target="_blank" class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-teal-200 hover:bg-teal-100 transition no-underline" title="Apri Editor Offline">💻 Offline</a>
+</div>
+<button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold ml-auto">👁️ Anteprima</button>
+<div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
+<div class="flex items-center gap-2">
+<div class="flex">
+<input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
+<button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r">📂</button>
+</div>
+<button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded shadow ml-2 transition">🔄 Aggiorna</button>
+</div>
+</div>
+<div class="flex items-center gap-2 ml-auto sm:ml-2">
+<span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
+<button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Esporta lezione in PDF">📄</button>
+<button onclick="checkImages()" class="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition" title="Controlla immagini/link prima di pubblicare">🔍</button>
+<button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
+<button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
+</div>
+</div>
+</header>
 
-            <button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold ml-auto">👁️ Anteprima</button>
+<div id="meta-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+<div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
+<div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
+<button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
+</div>
+<div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Durata Lezione (minuti)</label><input type="number" id="meta-duration" placeholder="es. 60" class="w-full border rounded px-3 py-2"></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
+<button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
+</div>
+</div>
+</div>
 
-            <div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
-                <div class="flex items-center gap-2">
-                    <div class="flex">
-                        <input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
-                        <button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r">📂</button>
-                    </div>
-                    <button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded shadow ml-2 transition">🔄 Aggiorna</button>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-2 ml-auto sm:ml-2">
-                <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
-                <button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Esporta lezione in PDF">📄</button>
-                <button onclick="checkImages()" class="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition" title="Controlla immagini/link prima di pubblicare">🔍</button>
-                <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
-                <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
-            </div>
-        </div>
-    </header>
+<div id="media-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+<div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3><button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
+<div class="p-6 space-y-6">
+<div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border"><span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span><input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono"></div>
+<label class="flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 rounded-lg p-2 cursor-pointer">
+<input type="checkbox" id="opt-webp" checked class="rounded text-emerald-600">
+<span class="font-bold text-emerald-800">⚡ Comprimi automaticamente in WebP prima di caricare (consigliato)</span>
+</label>
+<label class="flex items-center gap-2 text-xs bg-sky-50 border border-sky-200 rounded-lg p-2 cursor-pointer">
+<input type="checkbox" id="opt-ask-alt" checked class="rounded text-sky-600">
+<span class="font-bold text-sky-800">♿ Chiedi una descrizione (alt text) per ogni immagine</span>
+</label>
+<div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition relative bg-white group">
+<input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
+<div class="pointer-events-none group-hover:scale-105 transition-transform"><div class="text-5xl mb-3">📤</div><span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span><span class="text-xs text-gray-400 block mt-1">oppure trascina un\'immagine direttamente sul testo dell\'editor</span></div>
+</div>
+<details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-1.5">⚠️ Usa un token con permessi limitati al solo repo (Fine-grained PAT, Contents R/W). Il token resta salvato in questo browser.</p><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
+</div>
+</div>
+</div>
 
-    <div id="meta-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
-            <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
-                <button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
-                    <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Durata Lezione (minuti)</label><input type="number" id="meta-duration" placeholder="es. 60" class="w-full border rounded px-3 py-2"></div>
-                <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
-                <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
-            </div>
-        </div>
-    </div>
-    <div id="media-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3><button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
-            <div class="p-6 space-y-6">
-                <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border"><span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span><input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono"></div>
-                <label class="flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 rounded-lg p-2 cursor-pointer">
-                    <input type="checkbox" id="opt-webp" checked class="rounded text-emerald-600">
-                    <span class="font-bold text-emerald-800">⚡ Comprimi automaticamente in WebP prima di caricare (consigliato)</span>
-                </label>
-                <div class="border-2 border-dashed border-amber-300 rounded-xl p-10 text-center hover:bg-amber-50 transition relative bg-white group">
-                    <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
-                    <div class="pointer-events-none group-hover:scale-105 transition-transform"><div class="text-5xl mb-3">📤</div><span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span></div>
-                </div>
-                <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-1.5">⚠️ Usa un token con permessi limitati al solo repo (Fine-grained PAT, Contents R/W). Il token resta salvato in questo browser.</p><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
-            </div>
-        </div>
-    </div>
-    <div id="file-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg">📂 File Manager</h3><button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button></div>
-            <div class="bg-slate-100 p-2 flex items-center gap-2 border-b flex-wrap"><button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm">⬆️</button><input type="text" id="fm-search" oninput="fmFilter()" placeholder="🔍 Cerca..." class="border rounded px-2 py-1 text-sm w-32 focus:w-48 transition-all outline-none"><input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly><button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button><button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button></div>
-            <div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start"></div>
-        </div>
-    </div>
+<div id="file-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div class="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+<div class="bg-slate-800 text-white p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg">📂 File Manager</h3><button onclick="closeModal('file-modal')" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button></div>
+<div class="bg-slate-100 p-2 flex items-center gap-2 border-b flex-wrap"><button onclick="fmUp()" class="bg-white border rounded px-3 py-1 text-sm">⬆️</button><input type="text" id="fm-search" oninput="fmFilter()" placeholder="🔍 Cerca..." class="border rounded px-2 py-1 text-sm w-32 focus:w-48 transition-all outline-none"><input type="text" id="fm-path" class="flex-1 border rounded px-3 py-1 text-sm font-mono" readonly><button onclick="fmCreateFolder()" class="bg-green-100 text-green-700 border border-green-200 rounded px-3 py-1 text-sm font-bold">+ Folder</button><button onclick="fmRefresh()" class="bg-white border rounded px-3 py-1 text-sm">🔄</button></div>
+<div id="fm-list" class="flex-1 overflow-y-auto p-4 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 content-start"></div>
+</div>
+</div>
 
-    <div id="editor-area">
-        <div id="editor-col" class="w-full md:w-1/2 h-full flex flex-col border-r bg-white">
-            <div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
-                <button onclick="fmt('**', '**')" class="fmt-btn font-bold">B</button>
-                <button onclick="fmt('*', '*')" class="fmt-btn italic">I</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('# ', '')" class="fmt-btn">H1</button>
-                <button onclick="fmt('## ', '')" class="fmt-btn">H2</button>
-                <button onclick="fmt('### ', '')" class="fmt-btn">H3</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('- ', '')" class="fmt-btn">List</button>
-                <button onclick="fmt('1. ', '')" class="fmt-btn">1.</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
-                <button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
-                <button onclick="insertMakeCode()" class="fmt-btn text-purple-600" title="Incorpora progetto MakeCode">🤖 MakeCode</button>
-                <button onclick="insertMblockLink()" class="fmt-btn text-cyan-600" title="Inserisci link progetto mBlock">🚙 mBlock</button>
-                <button onclick="insertTable()" class="fmt-btn">📊 Tab</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
-                <button onclick="fmt('```\\n', '\\n```')" class="fmt-btn font-mono" title="Block">{ }</button>
-                <button onclick="fmt('```cpp\\n', '\\n```')" class="fmt-btn font-mono text-blue-600" title="C++">C++</button>
-                <button onclick="fmt('```python\\n', '\\n```')" class="fmt-btn font-mono text-yellow-600" title="Python">Py</button>
-                <div class="w-px h-4 bg-gray-300 mx-1"></div>
-                <select onchange="insertTemplate(this.value); this.selectedIndex=0;" class="fmt-btn bg-indigo-50 text-indigo-700 border-indigo-100 w-auto px-2 font-bold" title="Inserisci Modello">
-                    <option value="">📋 Modello...</option>
-                    <option value="microbit">🤖 Microbit / MakeCode</option>
-                    <option value="arduino">🔌 Arduino</option>
-                    <option value="scratch">🐱 Scratch</option>
-                    <option value="mbot">🚙 Mbot / mBlock</option>
-                </select>
-                <button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
-                <button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
-                <button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
-                <button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
-            </div>
-            <textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Caricamento librerie..."></textarea>
-        </div>
+<div id="editor-area">
+<div id="editor-col" class="w-full md:w-1/2 h-full flex flex-col border-r bg-white">
+<div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
+<button onclick="fmt('**', '**')" class="fmt-btn font-bold">B</button>
+<button onclick="fmt('*', '*')" class="fmt-btn italic">I</button>
+<div class="w-px h-4 bg-gray-300 mx-1"></div>
+<button onclick="fmt('# ', '')" class="fmt-btn">H1</button>
+<button onclick="fmt('## ', '')" class="fmt-btn">H2</button>
+<button onclick="fmt('### ', '')" class="fmt-btn">H3</button>
+<div class="w-px h-4 bg-gray-300 mx-1"></div>
+<button onclick="fmt('- ', '')" class="fmt-btn">List</button>
+<button onclick="fmt('1. ', '')" class="fmt-btn">1.</button>
+<div class="w-px h-4 bg-gray-300 mx-1"></div>
+<button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
+<button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
+<button onclick="insertMakeCode()" class="fmt-btn text-purple-600" title="Incorpora progetto MakeCode">🤖 MakeCode</button>
+<button onclick="insertMblockLink()" class="fmt-btn text-cyan-600" title="Inserisci link progetto mBlock">🚙 mBlock</button>
+<button onclick="insertTable()" class="fmt-btn">📊 Tab</button>
+<div class="w-px h-4 bg-gray-300 mx-1"></div>
+<button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
+<button onclick="fmt('```\\n', '\\n```')" class="fmt-btn font-mono" title="Block">{ }</button>
+<button onclick="fmt('```cpp\\n', '\\n```')" class="fmt-btn font-mono text-blue-600" title="C++">C++</button>
+<button onclick="fmt('```python\\n', '\\n```')" class="fmt-btn font-mono text-yellow-600" title="Python">Py</button>
+<div class="w-px h-4 bg-gray-300 mx-1"></div>
+<select onchange="insertTemplate(this.value); this.selectedIndex=0;" class="fmt-btn bg-indigo-50 text-indigo-700 border-indigo-100 w-auto px-2 font-bold" title="Inserisci Modello">
+<option value="">📋 Modello...</option>
+<option value="microbit">🤖 Microbit / MakeCode</option>
+<option value="arduino">🔌 Arduino</option>
+<option value="scratch">🐱 Scratch</option>
+<option value="mbot">🚙 Mbot / mBlock</option>
+</select>
+<button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
+<button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
+<button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
+<button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
+</div>
+<textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Caricamento librerie..." lang="it" spellcheck="true"></textarea>
+</div>
+<div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+<div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
+<div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
+<svg class="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+<span id="loading-msg" class="font-semibold text-gray-800 text-sm">Elaborazione...</span>
+</div>
+</div>
+</div>
 
-        <div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+<div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
+<div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium"><span id="status-icon"></span><span id="status-text">Messaggio</span></div>
+</div>
 
-        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
-            <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
-                 <svg class="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                 <span id="loading-msg" class="font-semibold text-gray-800 text-sm">Elaborazione...</span>
-            </div>
-        </div>
-    </div>
+<script>
+const input = document.getElementById('markdown-input');
+const preview = document.getElementById('preview-output');
+const editorCol = document.getElementById('editor-col');
 
-    <div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
-        <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium"><span id="status-icon"></span><span id="status-text">Messaggio</span></div>
-    </div>
+// --- 1. INIT & EVENTS ---
+window.addEventListener('load', () => {
+  ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
+    const saved = localStorage.getItem('my_' + id);
+    if (saved) document.getElementById(id).value = saved;
+    document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
+  });
+  document.getElementById('meta-date').valueAsDate = new Date();
+  const curPath = document.getElementById('gh-path').value.trim() || '_untitled';
+  const savedDraft = localStorage.getItem('autosave_draft_' + curPath) || localStorage.getItem('autosave_draft');
+  if (savedDraft && savedDraft.length > 10) {
+    if(confirm(`Bozza non salvata trovata per "${curPath}". Recuperare?`)) {
+      input.value = savedDraft;
+      renderPreview();
+    }
+  } else {
+    renderPreview();
+  }
+  localStorage.removeItem('autosave_draft'); // migrazione dalla vecchia chiave unica
+});
 
-    <script>
-        const input = document.getElementById('markdown-input');
-        const preview = document.getElementById('preview-output');
-        const editorCol = document.getElementById('editor-col');
-        
-        // --- 1. INIT & EVENTS ---
-        window.addEventListener('load', () => {
-            ['gh-token', 'gh-owner', 'gh-repo', 'gh-path', 'gh-img-base'].forEach(id => {
-                const saved = localStorage.getItem('my_' + id);
-                if (saved) document.getElementById(id).value = saved;
-                document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
-            });
-            document.getElementById('meta-date').valueAsDate = new Date();
-            
-            const curPath = document.getElementById('gh-path').value.trim() || '_untitled';
-            const savedDraft = localStorage.getItem('autosave_draft_' + curPath) || localStorage.getItem('autosave_draft');
-            if (savedDraft && savedDraft.length > 10) {
-                if(confirm(`Bozza non salvata trovata per "${curPath}". Recuperare?`)) {
-                    input.value = savedDraft;
-                    renderPreview();
-                }
-            } else {
-                renderPreview();
-            }
-            localStorage.removeItem('autosave_draft'); // migrazione dalla vecchia chiave unica
-        });
+input.addEventListener('input', () => {
+  const curPath = document.getElementById('gh-path').value.trim() || '_untitled';
+  localStorage.setItem('autosave_draft_' + curPath, input.value);
+  // Word Count
+  const text = input.value;
+  const words = text.trim().split(/\s+/).length;
+  const time = Math.ceil(words / 200);
+  document.getElementById('word-count').innerText = `${words} parole (~${time} min)`;
+  renderPreview();
+});
 
-        input.addEventListener('input', () => {
-            const curPath = document.getElementById('gh-path').value.trim() || '_untitled';
-            localStorage.setItem('autosave_draft_' + curPath, input.value);
-            // Word Count
-            const text = input.value;
-            const words = text.trim().split(/\s+/).length;
-            const time = Math.ceil(words / 200);
-            document.getElementById('word-count').innerText = `${words} parole (~${time} min)`;
-            renderPreview();
-        });
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); syncTextToGitHub(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); fmt('**', '**'); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); fmt('*', '*'); }
+});
 
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); syncTextToGitHub(); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); fmt('**', '**'); }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); fmt('*', '*'); }
-        });
+input.addEventListener('paste', async (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  const files = [];
+  for (const item of items) if (item.kind === 'file' && item.type.startsWith('image/')) files.push(item.getAsFile());
+  if (files.length > 0) {
+    e.preventDefault();
+    if(confirm(`Caricare ${files.length} immagini?`)) for (const f of files) await handleFileUploadLogic(f, true);
+  }
+});
 
-        input.addEventListener('paste', async (e) => {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            const files = [];
-            for (const item of items) if (item.kind === 'file' && item.type.startsWith('image/')) files.push(item.getAsFile());
-            if (files.length > 0) {
-                e.preventDefault();
-                if(confirm(`Caricare ${files.length} immagini?`)) for (const f of files) await handleFileUploadLogic(f, true);
-            }
-        });
+// --- 1b. DRAG & DROP IMMAGINI/VIDEO SULLA TEXTAREA ---
+input.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  input.classList.add('drag-over');
+});
+input.addEventListener('dragleave', () => {
+  input.classList.remove('drag-over');
+});
+input.addEventListener('drop', async (e) => {
+  e.preventDefault();
+  input.classList.remove('drag-over');
+  const dropped = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+  if (dropped.length === 0) return;
+  if (!confirm(`Caricare ${dropped.length} file trascinati?`)) return;
+  for (const f of dropped) await handleFileUploadLogic(f, false);
+});
 
-        // --- 2. LOGICA ANTEPRIMA (RIPARATA) ---
-        // Funzione per preprocessare i box colorati (::: tip) PRIMA di Marked
-        // Questo risolve i crash delle nuove versioni di marked.js
-        function preProcessMarkdown(text) {
-            // Regex per trovare blocchi ::: tipo ... :::
-            // Sostituisce con <div class="custom-block type"><span...>TITLE</span>content</div>
-            return text.replace(/^::: (\w+) (.*)\n([\s\S]*?)\n:::$/gm, (match, type, title, content) => {
-                return `<div class="custom-block ${type}"><span class="custom-block-title">${title || type.toUpperCase()}</span>\n${content}\n</div>`;
-            });
-        }
+// --- 2. LOGICA ANTEPRIMA (RIPARATA) ---
+// Funzione per preprocessare i box colorati (::: tip) PRIMA di Marked
+// Questo risolve i crash delle nuove versioni di marked.js
+function preProcessMarkdown(text) {
+  // Regex per trovare blocchi ::: tipo ... :::
+  // Sostituisce con <div class="custom-block type"><span...>TITLE</span>content</div>
+  return text.replace(/^::: (\w+) (.*)\n([\s\S]*?)\n:::$/gm, (match, type, title, content) => {
+    return `<div class="custom-block ${type}"><span class="custom-block-title">${title || type.toUpperCase()}</span>\n${content}\n</div>`;
+  });
+}
 
-        async function renderPreview() {
-            if (typeof marked === 'undefined') {
-                preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Attendere caricamento librerie...</div>`;
-                return;
-            }
+async function renderPreview() {
+  if (typeof marked === 'undefined') {
+    preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Attendere caricamento librerie...</div>`;
+    return;
+  }
+  // 1. Rimuovi Frontmatter (YAML)
+  let content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
+  // 2. Pre-processa i box colorati
+  content = preProcessMarkdown(content);
+  try {
+    // 3. Converti Markdown -> HTML
+    preview.innerHTML = marked.parse(content);
+    // 4. Formule (MathJax)
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      MathJax.typesetPromise([preview]).catch(() => {});
+    }
+    // 5. Diagrammi (Mermaid)
+    if (window.mermaid) {
+      const graphs = document.querySelectorAll('.language-mermaid');
+      graphs.forEach(async (graph, index) => {
+        try {
+          const { svg } = await window.mermaid.render('mermaid-' + index, graph.innerText);
+          graph.parentElement.innerHTML = svg;
+        } catch (e) { console.log("Mermaid:", e); }
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    preview.innerHTML += `<div class="text-red-500 text-xs mt-2">Errore Render: ${e.message}</div>`;
+  }
+}
 
-            // 1. Rimuovi Frontmatter (YAML)
-            let content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
-            
-            // 2. Pre-processa i box colorati
-            content = preProcessMarkdown(content);
+// --- TOOLBAR ---
+function fmt(s, e) {
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const val = input.value;
+  const r = s + val.substring(start, end) + e;
+  input.value = val.substring(0, start) + r + val.substring(end);
+  input.selectionStart = input.selectionEnd = start + r.length;
+  input.focus();
+  renderPreview();
+}
 
-            try {
-                // 3. Converti Markdown -> HTML
-                preview.innerHTML = marked.parse(content);
-                
-                // 4. Formule (MathJax)
-                if (window.MathJax && window.MathJax.typesetPromise) {
-                    MathJax.typesetPromise([preview]).catch(() => {});
-                }
+function insertTemplate(type) {
+  const templates = {
+    microbit: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Cosa facciamo se...?* -> ...\n\n## Fase 3: Scrittura del Codice 💻\n\nApriamo la categoria **...** nella Toolbox.\n\n| Sezione | Blocco | Istruzione e Funzione | Dove Inserire |\n|---|---|---|---|\n| | | | |\n\n`,
+    arduino: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Montaggio (Tinkercad) 🔌\n\n#### Componenti\n* 1x **Arduino Uno**\n* ...\n\n#### Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n## Fase 3: Scrittura del Codice 💻\n\n\`\`\`cpp\nvoid setup() {\n\n}\n\nvoid loop() {\n\n}\n\`\`\`\n\n`,
+    scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`,
+    mbot: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Collegamento e Sensori 🔌\n\n- Colleghiamo mBot al computer via **USB** / **Bluetooth**.\n- Sensori/attuatori usati in questa lezione: ...\n\n## Fase 3: Progettazione dello Pseudocodice 📝\n\n- *Se il sensore a ultrasuoni rileva un ostacolo...* -> ...\n\n## Fase 4: Costruzione degli Script su mBlock 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-mblock.png" alt="script mBlock" width="400"/>\n</center>\n\n::: info ℹ️ PROGETTO MBLOCK\nSe hai condiviso il progetto su [mBlock Community](https://ide.mblock.cc), incolla qui il link diretto.\n:::\n\n`
+  };
+  fmt(templates[type] || templates.microbit, '');
+}
 
-                // 5. Diagrammi (Mermaid)
-                if (window.mermaid) {
-                    const graphs = document.querySelectorAll('.language-mermaid');
-                    graphs.forEach(async (graph, index) => {
-                        try {
-                            const { svg } = await window.mermaid.render('mermaid-' + index, graph.innerText);
-                            graph.parentElement.innerHTML = svg;
-                        } catch (e) { console.log("Mermaid:", e); }
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-                preview.innerHTML += `<div class="text-red-500 text-xs mt-2">Errore Render: ${e.message}</div>`;
-            }
-        }
+function insertYouTube() { const u = prompt("Link YouTube:"); if(!u) return; let v = u.split('v=')[1] || u.split('/').pop(); v = v.split('&')[0]; fmt(`\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="https://www.youtube.com/embed/${v}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>\n`, ''); }
 
-        // --- TOOLBAR ---
-        function fmt(s, e) {
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const val = input.value;
-            const r = s + val.substring(start, end) + e;
-            input.value = val.substring(0, start) + r + val.substring(end);
-            input.selectionStart = input.selectionEnd = start + r.length;
-            input.focus();
-            renderPreview();
-        }
-        function insertTemplate(type) {
-            const templates = {
-                microbit: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Cosa facciamo se...?* -> ...\n\n## Fase 3: Scrittura del Codice 💻\n\nApriamo la categoria **...** nella Toolbox.\n\n| Sezione | Blocco | Istruzione e Funzione | Dove Inserire |\n|---|---|---|---|\n| | | | |\n\n`,
-                arduino: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Montaggio (Tinkercad) 🔌\n\n#### Componenti\n* 1x **Arduino Uno**\n* ...\n\n#### Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n## Fase 3: Scrittura del Codice 💻\n\n\`\`\`cpp\nvoid setup() {\n\n}\n\nvoid loop() {\n\n}\n\`\`\`\n\n`,
-                scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`,
-                mbot: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Collegamento e Sensori 🔌\n\n- Colleghiamo mBot al computer via **USB** / **Bluetooth**.\n- Sensori/attuatori usati in questa lezione: ...\n\n## Fase 3: Progettazione dello Pseudocodice 📝\n\n- *Se il sensore a ultrasuoni rileva un ostacolo...* -> ...\n\n## Fase 4: Costruzione degli Script su mBlock 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-mblock.png" alt="script mBlock" width="400"/>\n</center>\n\n::: info ℹ️ PROGETTO MBLOCK\nSe hai condiviso il progetto su [mBlock Community](https://ide.mblock.cc), incolla qui il link diretto.\n:::\n\n`
-            };
-            fmt(templates[type] || templates.microbit, '');
-        }
-        function insertYouTube() { const u = prompt("Link YouTube:"); if(!u) return; let v = u.split('v=')[1] || u.split('/').pop(); v = v.split('&')[0]; fmt(`\n<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;"><iframe src="https://www.youtube.com/embed/${v}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe></div>\n`, ''); }
-        function insertMakeCode() {
-            const u = prompt("Incolla il link 'Condividi' del progetto MakeCode (es. https://makecode.microbit.org/_xxxxxxxxxxxx):");
-            if (!u) return;
-            // Estrae l'ID del progetto dal link di condivisione, es. .../_AbCdEfGh -> AbCdEfGh
-            const id = u.trim().split('/').pop().replace(/^_/, '');
-            fmt(`\n<div style="position:relative;height:500px;width:100%;max-width:500px;margin:1em auto;"><iframe style="width:100%;height:100%;border:1px solid #cccccc;border-radius:8px;" src="https://makecode.microbit.org/#pub:${id}" allowfullscreen sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>\n`, '');
-        }
-        function insertMblockLink() {
-            const u = prompt("Incolla il link al progetto mBlock (es. https://ide.mblock.cc/...):");
-            if (!u) return;
-            // Nota: a differenza di MakeCode, mBlock/mblock.cc non offre un embed iframe ufficiale verificato,
-            // quindi qui inseriamo un link/pulsante invece di un iframe che potrebbe non caricarsi.
-            fmt(`\n<div style="text-align:center;margin:1em 0;"><a href="${u.trim()}" target="_blank" rel="noopener" style="display:inline-block;background:#0891b2;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">🚙 Apri il progetto mBlock</a></div>\n`, '');
-        }
-        function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
+function insertMakeCode() {
+  const u = prompt("Incolla il link 'Condividi' del progetto MakeCode (es. https://makecode.microbit.org/_xxxxxxxxxxxx):");
+  if (!u) return;
+  // Estrae l'ID del progetto dal link di condivisione, es. .../_AbCdEfGh -> AbCdEfGh
+  const id = u.trim().split('/').pop().replace(/^_/, '');
+  fmt(`\n<div style="position:relative;height:500px;width:100%;max-width:500px;margin:1em auto;"><iframe style="width:100%;height:100%;border:1px solid #cccccc;border-radius:8px;" src="https://makecode.microbit.org/#pub:${id}" allowfullscreen sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>\n`, '');
+}
 
-        // --- UTILS ---
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
-        function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
-        function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
-        function showStatus(msg, type='success') { const el = document.getElementById('status-msg'); el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded shadow flex gap-3":"bg-emerald-600 text-white px-4 py-3 rounded shadow flex gap-3"; document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅'; document.getElementById('status-text').innerText = msg; el.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000); }
-        function loading(s, m="") { const el=document.getElementById('loading-overlay'); if(s){document.getElementById('loading-msg').innerText=m; el.classList.remove('hidden');}else{el.classList.add('hidden');} }
-        function toggleMobileView() { const btn = document.getElementById('mobile-toggle-btn'); if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; } else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; } }
+function insertMblockLink() {
+  const u = prompt("Incolla il link al progetto mBlock (es. https://ide.mblock.cc/...):");
+  if (!u) return;
+  // Nota: a differenza di MakeCode, mBlock/mblock.cc non offre un embed iframe ufficiale verificato,
+  // quindi qui inseriamo un link/pulsante invece di un iframe che potrebbe non caricarsi.
+  fmt(`\n<div style="text-align:center;margin:1em 0;"><a href="${u.trim()}" target="_blank" rel="noopener" style="display:inline-block;background:#0891b2;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">🚙 Apri il progetto mBlock</a></div>\n`, '');
+}
 
-        // --- NUMERAZIONE AUTOMATICA LEZIONI ---
-        // Esegue max `limit` richieste in parallelo alla volta, per non sovraccaricare l'API GitHub
-        async function mapLimit(items, limit, fn) {
-            const results = new Array(items.length);
-            let i = 0;
-            async function worker() {
-                while (i < items.length) {
-                    const idx = i++;
-                    results[idx] = await fn(items[idx]);
-                }
-            }
-            await Promise.all(new Array(Math.min(limit, items.length)).fill(0).map(worker));
-            return results;
-        }
+function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
 
-        async function suggestNextNumber() {
-            const creds = getCreds();
-            if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
-            const cat = document.getElementById('meta-cat').value;
-            loading(true, "Scansiono le lezioni esistenti...");
-            try {
-                const dirRes = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/docs/blog?t=${Date.now()}`, { headers: { 'Authorization': `token ${creds.token}` } });
-                if (!dirRes.ok) throw new Error("Impossibile leggere docs/blog");
-                const dirList = await dirRes.json();
-                const mdFiles = Array.isArray(dirList) ? dirList.filter(f => f.type === 'file' && f.name.endsWith('.md')) : [];
+// --- UTILS ---
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
+function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
+function showStatus(msg, type='success') { const el = document.getElementById('status-msg'); el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded shadow flex gap-3":"bg-emerald-600 text-white px-4 py-3 rounded shadow flex gap-3"; document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅'; document.getElementById('status-text').innerText = msg; el.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000); }
+function loading(s, m="") { const el=document.getElementById('loading-overlay'); if(s){document.getElementById('loading-msg').innerText=m; el.classList.remove('hidden');}else{el.classList.add('hidden');} }
+function toggleMobileView() { const btn = document.getElementById('mobile-toggle-btn'); if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; } else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; } }
 
-                let maxNum = 0, found = 0;
-                await mapLimit(mdFiles, 6, async (f) => {
-                    try {
-                        const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${f.path}`, { headers: { 'Authorization': `token ${creds.token}` } });
-                        if (!r.ok) return;
-                        const content = b64DecodeUnicode((await r.json()).content);
-                        const fmMatch = content.match(/^---([\s\S]*?)---/);
-                        if (!fmMatch) return;
-                        const catMatch = fmMatch[1].match(/category:\s*(.+)/i);
-                        if (!catMatch || catMatch[1].trim().toLowerCase() !== cat.toLowerCase()) return;
-                        const numMatch = f.name.match(/^(\d+)/);
-                        if (numMatch) { found++; maxNum = Math.max(maxNum, parseInt(numMatch[1], 10)); }
-                    } catch (e) { /* file singolo non leggibile: lo saltiamo */ }
-                });
+// --- NUMERAZIONE AUTOMATICA LEZIONI ---
+// Esegue max `limit` richieste in parallelo alla volta, per non sovraccaricare l'API GitHub
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length);
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await fn(items[idx]);
+    }
+  }
+  await Promise.all(new Array(Math.min(limit, items.length)).fill(0).map(worker));
+  return results;
+}
 
-                const nextNum = maxNum + 1;
-                const title = document.getElementById('meta-title').value.trim();
-                const slug = title ? title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-') : 'nuova-lezione';
-                document.getElementById('gh-path').value = `docs/blog/${nextNum}-${slug}.md`;
-                showStatus(`Categoria "${cat}": trovate ${found} lezioni, prossimo numero = ${nextNum}`);
-            } catch (e) {
-                showStatus(e.message, 'error');
-            } finally {
-                loading(false);
-            }
-        }
+async function suggestNextNumber() {
+  const creds = getCreds();
+  if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
+  const cat = document.getElementById('meta-cat').value;
+  loading(true, "Scansiono le lezioni esistenti...");
+  try {
+    const dirRes = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/docs/blog?t=${Date.now()}`, { headers: { 'Authorization': `token ${creds.token}` } });
+    if (!dirRes.ok) throw new Error("Impossibile leggere docs/blog");
+    const dirList = await dirRes.json();
+    const mdFiles = Array.isArray(dirList) ? dirList.filter(f => f.type === 'file' && f.name.endsWith('.md')) : [];
+    let maxNum = 0, found = 0;
+    await mapLimit(mdFiles, 6, async (f) => {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${f.path}`, { headers: { 'Authorization': `token ${creds.token}` } });
+        if (!r.ok) return;
+        const content = b64DecodeUnicode((await r.json()).content);
+        const fmMatch = content.match(/^---([\s\S]*?)---/);
+        if (!fmMatch) return;
+        const catMatch = fmMatch[1].match(/category:\s*(.+)/i);
+        if (!catMatch || catMatch[1].trim().toLowerCase() !== cat.toLowerCase()) return;
+        const numMatch = f.name.match(/^(\d+)/);
+        if (numMatch) { found++; maxNum = Math.max(maxNum, parseInt(numMatch[1], 10)); }
+      } catch (e) { /* file singolo non leggibile: lo saltiamo */ }
+    });
+    const nextNum = maxNum + 1;
+    const title = document.getElementById('meta-title').value.trim();
+    const slug = title ? title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-') : 'nuova-lezione';
+    document.getElementById('gh-path').value = `docs/blog/${nextNum}-${slug}.md`;
+    showStatus(`Categoria "${cat}": trovate ${found} lezioni, prossimo numero = ${nextNum}`);
+  } catch (e) {
+    showStatus(e.message, 'error');
+  } finally {
+    loading(false);
+  }
+}
 
-        // --- METADATA ---
-        function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); document.getElementById('gh-path').value = `docs/blog/${slug}.md`; }
-        function applyMetadata() {
-            const title = document.getElementById('meta-title').value;
-            const safeDesc = document.getElementById('meta-desc').value.replace(/'/g, "''");
-            const checked = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(c=>c.value);
-            const target = checked.length > 0 ? checked.join(', ') : 'Tutti';
-            const img = document.getElementById('meta-image').value;
-            const duration = document.getElementById('meta-duration').value;
-            const t = `---
+// --- METADATA ---
+function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); document.getElementById('gh-path').value = `docs/blog/${slug}.md`; }
+function applyMetadata() {
+  const title = document.getElementById('meta-title').value;
+  const safeDesc = document.getElementById('meta-desc').value.replace(/'/g, "''");
+  const checked = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(c=>c.value);
+  const target = checked.length > 0 ? checked.join(', ') : 'Tutti';
+  const img = document.getElementById('meta-image').value;
+  const duration = document.getElementById('meta-duration').value;
+  const t = `---
 title: ${title}
 description: '${safeDesc}'
 draft: ${document.getElementById('meta-draft').value}
@@ -414,262 +428,334 @@ image: ${img}
 ---
 
 # ${title}
-
 `;
-            if(input.value.length>10 && !confirm("Sovrascrivo?")) return;
-            input.value = t; renderPreview(); closeModal('meta-modal');
+  if(input.value.length>10 && !confirm("Sovrascrivo?")) return;
+  input.value = t; renderPreview(); closeModal('meta-modal');
+}
+
+// --- COMPRESSIONE WEBP (client-side, prima dell'upload) ---
+function compressToWebP(file, maxWidth = 1200, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("Compressione WebP non riuscita (browser non supportato?)"));
+          resolve(blob);
+        }, 'image/webp', quality);
+      };
+      img.onerror = () => reject(new Error("Immagine non leggibile"));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("Lettura file fallita"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// --- UPLOAD ---
+document.getElementById('modal-file-input').addEventListener('change', async (e) => { if(e.target.files.length) { for(const f of e.target.files) await handleFileUploadLogic(f, false); e.target.value=''; closeModal('media-modal'); } });
+
+async function handleFileUploadLogic(file, isPaste) {
+  const creds = getCreds(); if (!creds.token) return showStatus("Manca Token", 'error');
+  const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
+  let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+  if (isPaste && (name==='image.png'||name==='Unknown.png')) name = "screenshot_" + Date.now() + ".png";
+  const doCompress = document.getElementById('opt-webp').checked && file.type.startsWith('image/') && file.type !== 'image/svg+xml' && file.type !== 'image/webp';
+  let uploadFile = file;
+
+  // --- ALT TEXT: chiediamo una descrizione per l'accessibilità, solo per le immagini ---
+  let altText = '';
+  const askAlt = document.getElementById('opt-ask-alt') ? document.getElementById('opt-ask-alt').checked : true;
+  if (askAlt && file.type.startsWith('image/')) {
+    altText = (prompt("♿ Descrizione immagine (alt text) per accessibilità e SEO.\nLascia vuoto per usare il nome del file:", "") || '').trim();
+  }
+
+  if (doCompress) {
+    try {
+      loading(true, "Compressione WebP...");
+      const blob = await compressToWebP(file, 1200, 0.8);
+      name = name.replace(/\.[^.]+$/, '') + '.webp';
+      uploadFile = new File([blob], name, { type: 'image/webp' });
+    } catch (e) {
+      console.warn("Compressione WebP fallita, carico il file originale:", e.message);
+      uploadFile = file; // fallback: carica l'originale se il browser non sa comprimere in WebP
+    }
+  }
+  loading(true, "Upload " + name);
+  try {
+    const buf = await uploadFile.arrayBuffer(); let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
+    const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${base + name}`;
+    const res = await fetch(url, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({message: "Upload media", content: btoa(bin)}) });
+    if(!res.ok) throw new Error("Err Upload");
+    const relPath = '/' + (base + name).replace('docs/public/', '');
+    document.getElementById('meta-image').value = relPath; // AUTO COVER
+    const safeAlt = (altText || name).replace(/"/g, '&quot;');
+    let tag = uploadFile.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n<center>\n\t<img src="${relPath}" alt="${safeAlt}" width="300"/>\n</center>\n`;
+    const s = input.selectionStart; input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
+    renderPreview(); showStatus("Fatto!" + (doCompress ? " (compresso in WebP)" : ""));
+  } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
+}
+
+// --- ESPORTAZIONE PDF (senza troncamenti strani) ---
+async function exportPDF() {
+  if (typeof html2pdf === 'undefined') return showStatus("Libreria PDF non ancora caricata, riprova tra un istante", 'error');
+  // 1. Assicura che l'anteprima sia aggiornata (marked + MathJax + Mermaid)
+  await renderPreview();
+  // Piccola attesa per dare tempo a MathJax/Mermaid (asincroni) di completare il rendering
+  await new Promise(r => setTimeout(r, 500));
+  // 2. Estrae titolo/metadati dal front matter per intestazione e nome file
+  const fmMatch = input.value.match(/^---([\s\S]*?)---/);
+  let title = 'Lezione', category = '', target = '', duration = '';
+  if (fmMatch) {
+    const get = (key) => { const m = fmMatch[1].match(new RegExp(key + ':\\s*(.+)')); return m ? m[1].replace(/['"]/g, '').trim() : ''; };
+    title = get('title') || title;
+    category = get('category');
+    target = get('class_target');
+    duration = get('duration');
+  }
+  const subtitleParts = [category, target ? `Classe: ${target}` : '', duration ? `${duration} min` : ''].filter(Boolean);
+  // 3. Costruisce un contenitore "pulito" fuori schermo, con CSS dedicato alla stampa
+  // (foglio A4, niente sfondo grigio dell'editor, e soprattutto le regole anti-troncamento)
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:190mm; background:#fff; color:#1e293b; font-family:sans-serif;';
+  wrapper.innerHTML = `
+    <style>
+      .pdf-root { padding: 4mm; }
+      .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
+      .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+      .pdf-root h1, .pdf-root h2, .pdf-root h3 {
+        break-after: avoid; page-break-after: avoid; /* niente titoli isolati a fine pagina */
+        break-inside: avoid; page-break-inside: avoid;
+      }
+      .pdf-root p, .pdf-root li { orphans: 3; widows: 3; }
+      .pdf-root img {
+        max-width: 100%;
+        max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
+        break-inside: avoid; page-break-inside: avoid;
+        display: block; margin: 10px auto;
+      }
+      .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
+        break-inside: avoid; page-break-inside: avoid;
+      }
+      .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; }
+      .pdf-root th, .pdf-root td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+      .pdf-root pre { background:#1f2937; color:#fff; padding:10px; border-radius:6px; font-size:11px; overflow-wrap: break-word; white-space: pre-wrap; }
+      .pdf-root code { font-family: monospace; }
+      .pdf-root .custom-block { border-left: 4px solid #3b82f6; background:#eff6ff; padding:10px; border-radius:6px; margin:10px 0; }
+    </style>
+    <div class="pdf-root">
+      <h1>${title}</h1>
+      ${subtitleParts.length ? `<div class="pdf-subtitle">${subtitleParts.join(' · ')}</div>` : ''}
+      ${preview.innerHTML}
+    </div>`;
+  document.body.appendChild(wrapper);
+  const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const opt = {
+    margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
+    filename: `${fileSlug}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: {
+      mode: ['css', 'legacy'],
+      avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
+    }
+  };
+  loading(true, "Generazione PDF...");
+  try {
+    await html2pdf().set(opt).from(wrapper.querySelector('.pdf-root')).save();
+    showStatus("PDF generato!");
+  } catch (e) {
+    showStatus("Errore PDF: " + e.message, 'error');
+  } finally {
+    document.body.removeChild(wrapper);
+    loading(false);
+  }
+}
+
+// --- CONTROLLO IMMAGINI/LINK PRIMA DI PUBBLICARE ---
+async function checkImages() {
+  const creds = getCreds();
+  if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
+  // Trova sia ![alt](percorso) markdown sia <img src="percorso">, ignorando URL esterni (http/https)
+  const mdImgs = [...input.value.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map(m => m[1]);
+  const htmlImgs = [...input.value.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1]);
+  const allPaths = [...new Set([...mdImgs, ...htmlImgs])].filter(p => !/^https?:\/\//i.test(p) && !p.startsWith('data:'));
+  if (allPaths.length === 0) return showStatus("Nessuna immagine locale da controllare");
+  loading(true, `Controllo ${allPaths.length} immagini...`);
+  const missing = [];
+  try {
+    await mapLimit(allPaths, 6, async (p) => {
+      // Converte il percorso pubblico nel percorso reale nel repo (docs/public/...), gestendo sia /img/x.png sia img/x.png
+      const repoPath = 'docs/public/' + p.replace(/^\//, '');
+      try {
+        const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${creds.token}` } });
+        if (!r.ok) missing.push(p);
+      } catch (e) { missing.push(p); }
+    });
+    if (missing.length === 0) {
+      showStatus(`✅ Tutte le ${allPaths.length} immagini esistono nel repo`);
+    } else {
+      showStatus(`⚠️ ${missing.length} immagine/i mancante/i su GitHub`, 'error');
+      alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n"));
+    }
+  } finally {
+    loading(false);
+  }
+}
+
+// --- ELIMINA FILE CORRENTE (bottone header) ---
+async function deleteFile() {
+  const c = getCreds();
+  const p = document.getElementById('gh-path').value.trim();
+  if (!c.token) return showStatus("Manca Token", 'error');
+  if (!p) return showStatus("Nessun percorso file impostato", 'error');
+  if (!confirm(`Eliminare definitivamente "${p}" dal repository?`)) return;
+  loading(true, "Eliminazione...");
+  try {
+    const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { headers: { 'Authorization': `token ${c.token}` } });
+    if (!r.ok) throw new Error("File non trovato su GitHub");
+    const sha = (await r.json()).sha;
+    const del = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${c.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete ${p}`, sha })
+    });
+    if (!del.ok) throw new Error("Errore durante l'eliminazione");
+    input.value = '';
+    localStorage.removeItem('autosave_draft_' + p);
+    renderPreview();
+    showStatus("File eliminato!");
+  } catch (e) {
+    showStatus(e.message, 'error');
+  } finally {
+    loading(false);
+  }
+}
+
+// --- FILE MANAGER & LOAD/SAVE ---
+let fmPathCur = '';
+function openFileManager() { fmNavigate(document.getElementById('gh-img-base').value || ''); openModal('file-modal'); }
+function fmFilter() { const q = document.getElementById('fm-search').value.toLowerCase(); document.querySelectorAll('#fm-list > div').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
+async function fmNavigate(p) {
+  p = p.replace(/^\/|\/$/g, ''); fmPathCur = p; document.getElementById('fm-path').value = p;
+  const creds = getCreds(); const list = document.getElementById('fm-list');
+  list.innerHTML = '<p class="col-span-full text-center text-gray-400">Loading...</p>';
+  try {
+    const res = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}?t=${Date.now()}`, { headers: {'Authorization': `token ${creds.token}`} });
+    if(!res.ok) throw new Error("Dir not found");
+    const data = await res.json(); if(!Array.isArray(data)) throw new Error("Err Data");
+    list.innerHTML = '';
+    data.sort((a,b)=>(a.type===b.type)?0:(a.type==='dir'?-1:1)).forEach(i => {
+      const isD = i.type === 'dir'; const div = document.createElement('div');
+      div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isD ? 'bg-indigo-50' : 'bg-white'}`;
+      div.innerHTML = `<div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}"><span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span><span class="text-sm truncate">${i.name}</span></div><div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
+      list.appendChild(div);
+    });
+  } catch(e) { list.innerHTML = `<p class="text-red-500 col-span-full">${e.message}</p>`; }
+}
+function fmUp() { if(fmPathCur) fmNavigate(fmPathCur.split('/').slice(0,-1).join('/')); }
+function fmRefresh() { fmNavigate(fmPathCur); }
+function fmSelectFile(p) { if(p.endsWith('.md') && confirm("Aprire?")) { document.getElementById('gh-path').value = p; closeModal('file-modal'); loadFromGitHub(); } }
+async function fmCreateFolder() { const n = prompt("Nome:"); if(!n) return; apiCall('PUT', (fmPathCur?fmPathCur+'/':'')+n+'/.keep', {message:"New Folder", content:""}, ()=>fmRefresh()); }
+async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
+async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
+async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
+async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); renderPreview(); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
+
+// --- SALVATAGGIO CON RILEVAMENTO CONFLITTI (409) ---
+async function syncTextToGitHub() {
+  const c = getCreds(); const p = document.getElementById('gh-path').value.trim();
+  if(!c.token) return showStatus("No Token", 'error');
+  const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true;
+  try {
+    let sha = null;
+    try {
+      const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}});
+      if(r.ok) sha=(await r.json()).sha;
+    } catch(e){}
+    const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {
+      method: 'PUT',
+      headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: sha ? `Update ${p}` : `Create ${p}`, content: b64EncodeUnicode(input.value), sha: sha || undefined })
+    });
+    if(!res.ok) {
+      if (res.status === 409) {
+        throw new Error("⚠️ Il file è stato modificato altrove (es. da un altro dispositivo). Ricarica con 📂 prima di salvare, per non perdere le modifiche più recenti.");
+      }
+      let detail = '';
+      try { detail = (await res.json()).message || ''; } catch(e) {}
+      throw new Error(`Errore salvataggio (${res.status})${detail ? ': ' + detail : ''}`);
+    }
+    localStorage.removeItem('autosave_draft_' + p);
+    showStatus("Salvato!");
+  } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; }
+}
+</script>
+
+<script>
+// --- SERVICE WORKER + BANNER "NUOVA VERSIONE DISPONIBILE" ---
+let waitingWorker = null;
+
+function showUpdateBanner() {
+  document.getElementById('update-banner').classList.remove('hidden');
+}
+function dismissUpdateBanner() {
+  document.getElementById('update-banner').classList.add('hidden');
+}
+function applyUpdate() {
+  if (waitingWorker) {
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  } else {
+    // Fallback: se per qualche motivo non abbiamo riferimento al worker in attesa, ricarica e basta
+    window.location.reload();
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('ServiceWorker registrato: ', registration.scope);
+
+        // Caso 1: c'è già un worker "in attesa" quando la pagina si carica
+        if (registration.waiting) {
+          waitingWorker = registration.waiting;
+          showUpdateBanner();
         }
 
-        // --- COMPRESSIONE WEBP (client-side, prima dell'upload) ---
-        function compressToWebP(file, maxWidth = 1200, quality = 0.8) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        let w = img.width, h = img.height;
-                        if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        canvas.toBlob((blob) => {
-                            if (!blob) return reject(new Error("Compressione WebP non riuscita (browser non supportato?)"));
-                            resolve(blob);
-                        }, 'image/webp', quality);
-                    };
-                    img.onerror = () => reject(new Error("Immagine non leggibile"));
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => reject(new Error("Lettura file fallita"));
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // --- UPLOAD ---
-        document.getElementById('modal-file-input').addEventListener('change', async (e) => { if(e.target.files.length) { for(const f of e.target.files) await handleFileUploadLogic(f, false); e.target.value=''; closeModal('media-modal'); } });
-        async function handleFileUploadLogic(file, isPaste) {
-            const creds = getCreds(); if (!creds.token) return showStatus("Manca Token", 'error');
-            const base = document.getElementById('gh-img-base').value.trim().replace(/\/$/, '') + '/';
-            let name = file.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
-            if (isPaste && (name==='image.png'||name==='Unknown.png')) name = "screenshot_" + Date.now() + ".png";
-
-            const doCompress = document.getElementById('opt-webp').checked && file.type.startsWith('image/') && file.type !== 'image/svg+xml' && file.type !== 'image/webp';
-            let uploadFile = file;
-            if (doCompress) {
-                try {
-                    loading(true, "Compressione WebP...");
-                    const blob = await compressToWebP(file, 1200, 0.8);
-                    name = name.replace(/\.[^.]+$/, '') + '.webp';
-                    uploadFile = new File([blob], name, { type: 'image/webp' });
-                } catch (e) {
-                    console.warn("Compressione WebP fallita, carico il file originale:", e.message);
-                    uploadFile = file; // fallback: carica l'originale se il browser non sa comprimere in WebP
-                }
+        // Caso 2: viene trovato un aggiornamento mentre siamo sulla pagina
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            // "installed" + un controller già attivo = è una vera novità, non la prima installazione
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              waitingWorker = newWorker;
+              showUpdateBanner();
             }
+          });
+        });
+      })
+      .catch(error => {
+        console.log('Errore ServiceWorker: ', error);
+      });
 
-            loading(true, "Upload " + name);
-            try {
-                const buf = await uploadFile.arrayBuffer(); let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
-                const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${base + name}`;
-                const res = await fetch(url, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({message: "Upload media", content: btoa(bin)}) });
-                if(!res.ok) throw new Error("Err Upload");
-                const relPath = '/' + (base + name).replace('docs/public/', '');
-                document.getElementById('meta-image').value = relPath; // AUTO COVER
-                let tag = uploadFile.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n<center>\n\t<img src="${relPath}" alt="${name}" width="300"/>\n</center>\n`;
-                const s = input.selectionStart; input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
-                renderPreview(); showStatus("Fatto!" + (doCompress ? " (compresso in WebP)" : ""));
-            } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
-        }
-
-        // --- ESPORTAZIONE PDF (senza troncamenti strani) ---
-        async function exportPDF() {
-            if (typeof html2pdf === 'undefined') return showStatus("Libreria PDF non ancora caricata, riprova tra un istante", 'error');
-
-            // 1. Assicura che l'anteprima sia aggiornata (marked + MathJax + Mermaid)
-            await renderPreview();
-            // Piccola attesa per dare tempo a MathJax/Mermaid (asincroni) di completare il rendering
-            await new Promise(r => setTimeout(r, 500));
-
-            // 2. Estrae titolo/metadati dal front matter per intestazione e nome file
-            const fmMatch = input.value.match(/^---([\s\S]*?)---/);
-            let title = 'Lezione', category = '', target = '', duration = '';
-            if (fmMatch) {
-                const get = (key) => { const m = fmMatch[1].match(new RegExp(key + ':\\s*(.+)')); return m ? m[1].replace(/['"]/g, '').trim() : ''; };
-                title = get('title') || title;
-                category = get('category');
-                target = get('class_target');
-                duration = get('duration');
-            }
-            const subtitleParts = [category, target ? `Classe: ${target}` : '', duration ? `${duration} min` : ''].filter(Boolean);
-
-            // 3. Costruisce un contenitore "pulito" fuori schermo, con CSS dedicato alla stampa
-            //    (foglio A4, niente sfondo grigio dell'editor, e soprattutto le regole anti-troncamento)
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:190mm; background:#fff; color:#1e293b; font-family:sans-serif;';
-            wrapper.innerHTML = `
-                <style>
-                    .pdf-root { padding: 4mm; }
-                    .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
-                    .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-                    .pdf-root h1, .pdf-root h2, .pdf-root h3 {
-                        break-after: avoid; page-break-after: avoid; /* niente titoli isolati a fine pagina */
-                        break-inside: avoid; page-break-inside: avoid;
-                    }
-                    .pdf-root p, .pdf-root li { orphans: 3; widows: 3; }
-                    .pdf-root img {
-                        max-width: 100%;
-                        max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
-                        break-inside: avoid; page-break-inside: avoid;
-                        display: block; margin: 10px auto;
-                    }
-                    .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
-                        break-inside: avoid; page-break-inside: avoid;
-                    }
-                    .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; }
-                    .pdf-root th, .pdf-root td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
-                    .pdf-root pre { background:#1f2937; color:#fff; padding:10px; border-radius:6px; font-size:11px; overflow-wrap: break-word; white-space: pre-wrap; }
-                    .pdf-root code { font-family: monospace; }
-                    .pdf-root .custom-block { border-left: 4px solid #3b82f6; background:#eff6ff; padding:10px; border-radius:6px; margin:10px 0; }
-                </style>
-                <div class="pdf-root">
-                    <h1>${title}</h1>
-                    ${subtitleParts.length ? `<div class="pdf-subtitle">${subtitleParts.join(' · ')}</div>` : ''}
-                    ${preview.innerHTML}
-                </div>`;
-            document.body.appendChild(wrapper);
-
-            const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-            const opt = {
-                margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
-                filename: `${fileSlug}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: {
-                    mode: ['css', 'legacy'],
-                    avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
-                }
-            };
-
-            loading(true, "Generazione PDF...");
-            try {
-                await html2pdf().set(opt).from(wrapper.querySelector('.pdf-root')).save();
-                showStatus("PDF generato!");
-            } catch (e) {
-                showStatus("Errore PDF: " + e.message, 'error');
-            } finally {
-                document.body.removeChild(wrapper);
-                loading(false);
-            }
-        }
-
-        // --- CONTROLLO IMMAGINI/LINK PRIMA DI PUBBLICARE ---
-        async function checkImages() {
-            const creds = getCreds();
-            if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
-
-            // Trova sia ![alt](percorso) markdown sia <img src="percorso">, ignorando URL esterni (http/https)
-            const mdImgs = [...input.value.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)].map(m => m[1]);
-            const htmlImgs = [...input.value.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1]);
-            const allPaths = [...new Set([...mdImgs, ...htmlImgs])].filter(p => !/^https?:\/\//i.test(p) && !p.startsWith('data:'));
-
-            if (allPaths.length === 0) return showStatus("Nessuna immagine locale da controllare");
-
-            loading(true, `Controllo ${allPaths.length} immagini...`);
-            const missing = [];
-            try {
-                await mapLimit(allPaths, 6, async (p) => {
-                    // Converte il percorso pubblico nel percorso reale nel repo (docs/public/...), gestendo sia /img/x.png sia img/x.png
-                    const repoPath = 'docs/public/' + p.replace(/^\//, '');
-                    try {
-                        const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${creds.token}` } });
-                        if (!r.ok) missing.push(p);
-                    } catch (e) { missing.push(p); }
-                });
-                if (missing.length === 0) {
-                    showStatus(`✅ Tutte le ${allPaths.length} immagini esistono nel repo`);
-                } else {
-                    showStatus(`⚠️ ${missing.length} immagine/i mancante/i su GitHub`, 'error');
-                    alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n"));
-                }
-            } finally {
-                loading(false);
-            }
-        }
-
-        // --- ELIMINA FILE CORRENTE (bottone header) ---
-        async function deleteFile() {
-            const c = getCreds();
-            const p = document.getElementById('gh-path').value.trim();
-            if (!c.token) return showStatus("Manca Token", 'error');
-            if (!p) return showStatus("Nessun percorso file impostato", 'error');
-            if (!confirm(`Eliminare definitivamente "${p}" dal repository?`)) return;
-            loading(true, "Eliminazione...");
-            try {
-                const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { headers: { 'Authorization': `token ${c.token}` } });
-                if (!r.ok) throw new Error("File non trovato su GitHub");
-                const sha = (await r.json()).sha;
-                const del = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `token ${c.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `Delete ${p}`, sha })
-                });
-                if (!del.ok) throw new Error("Errore durante l'eliminazione");
-                input.value = '';
-                localStorage.removeItem('autosave_draft_' + p);
-                renderPreview();
-                showStatus("File eliminato!");
-            } catch (e) {
-                showStatus(e.message, 'error');
-            } finally {
-                loading(false);
-            }
-        }
-
-        // --- FILE MANAGER & LOAD/SAVE ---
-        let fmPathCur = '';
-        function openFileManager() { fmNavigate(document.getElementById('gh-img-base').value || ''); openModal('file-modal'); }
-        function fmFilter() { const q = document.getElementById('fm-search').value.toLowerCase(); document.querySelectorAll('#fm-list > div').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
-        async function fmNavigate(p) {
-            p = p.replace(/^\/|\/$/g, ''); fmPathCur = p; document.getElementById('fm-path').value = p;
-            const creds = getCreds(); const list = document.getElementById('fm-list');
-            list.innerHTML = '<p class="col-span-full text-center text-gray-400">Loading...</p>';
-            try {
-                const res = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}?t=${Date.now()}`, { headers: {'Authorization': `token ${creds.token}`} });
-                if(!res.ok) throw new Error("Dir not found");
-                const data = await res.json(); if(!Array.isArray(data)) throw new Error("Err Data");
-                list.innerHTML = '';
-                data.sort((a,b)=>(a.type===b.type)?0:(a.type==='dir'?-1:1)).forEach(i => {
-                    const isD = i.type === 'dir'; const div = document.createElement('div');
-                    div.className = `border rounded p-2 flex items-center justify-between hover:bg-slate-50 ${isD ? 'bg-indigo-50' : 'bg-white'}`;
-                    div.innerHTML = `<div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}"><span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span><span class="text-sm truncate">${i.name}</span></div><div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
-                    list.appendChild(div);
-                });
-            } catch(e) { list.innerHTML = `<p class="text-red-500 col-span-full">${e.message}</p>`; }
-        }
-        function fmUp() { if(fmPathCur) fmNavigate(fmPathCur.split('/').slice(0,-1).join('/')); }
-        function fmRefresh() { fmNavigate(fmPathCur); }
-        function fmSelectFile(p) { if(p.endsWith('.md') && confirm("Aprire?")) { document.getElementById('gh-path').value = p; closeModal('file-modal'); loadFromGitHub(); } }
-        async function fmCreateFolder() { const n = prompt("Nome:"); if(!n) return; apiCall('PUT', (fmPathCur?fmPathCur+'/':'')+n+'/.keep', {message:"New Folder", content:""}, ()=>fmRefresh()); }
-        async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
-        async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
-        async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
-        async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); renderPreview(); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
-        async function syncTextToGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true; try { let sha = null; try { const r = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {headers:{'Authorization':`token ${c.token}`}}); if(r.ok) sha=(await r.json()).sha; } catch(e){} const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, { method: 'PUT', headers: {'Authorization': `token ${c.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ message: sha ? `Update ${p}` : `Create ${p}`, content: b64EncodeUnicode(input.value), sha: sha || undefined }) }); if(!res.ok) throw new Error("Err Save"); localStorage.removeItem('autosave_draft_' + p); showStatus("Salvato!"); } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; } }
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registrato: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Errore ServiceWorker: ', error);
-                    });
-            });
-        }
-    </script>
+    // Quando il nuovo Service Worker prende il controllo, ricarichiamo una sola volta
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  });
+}
+</script>
 </body>
 </html>
