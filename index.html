@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-src https://www.youtube.com https://makecode.microbit.org; font-src 'self' data: https://cdn.jsdelivr.net; worker-src 'self' blob:;">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
@@ -126,7 +127,7 @@
                     <input type="file" id="modal-file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/mp4,video/webm" multiple>
                     <div class="pointer-events-none group-hover:scale-105 transition-transform"><div class="text-5xl mb-3">📤</div><span class="font-bold text-gray-600 block">Scegli File (Multiplo)</span></div>
                 </div>
-                <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
+                <details class="group pt-4 border-t"><summary class="cursor-pointer text-xs font-bold text-gray-400 uppercase list-none text-center">🔐 Configurazione</summary><div class="grid gap-2 mt-3 bg-gray-50 p-3 rounded"><p class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded p-1.5">⚠️ Usa un token con permessi limitati al solo repo (Fine-grained PAT, Contents R/W). Il token resta salvato in questo browser.</p><input type="password" id="gh-token" placeholder="Token" class="border rounded px-2 py-1 text-xs"><div class="flex gap-2"><input type="text" id="gh-owner" placeholder="User" class="border w-1/2 px-2 py-1 text-xs"><input type="text" id="gh-repo" placeholder="Repo" class="border w-1/2 px-2 py-1 text-xs"></div></div></details>
             </div>
         </div>
     </div>
