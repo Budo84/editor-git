@@ -11,7 +11,9 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // Forza l'attivazione immediata
+    // RIMOSSO: self.skipWaiting();
+    // Non forziamo più l'attivazione immediata: così il nuovo worker resta "in attesa"
+    // e index.html può mostrare il banner "Nuova versione disponibile" prima di attivarlo.
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS_TO_CACHE);
@@ -29,7 +31,7 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim()) // AGGIUNTO: appena attivato, prende subito il controllo delle pagine aperte
     );
 });
 
@@ -40,4 +42,11 @@ self.addEventListener('fetch', (event) => {
             return fetch(event.request);
         })
     );
+});
+
+// AGGIUNTO: attivazione immediata solo su richiesta esplicita (pulsante "Aggiorna ora" del banner)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
