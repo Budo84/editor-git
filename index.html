@@ -116,6 +116,7 @@ window.MathJax = {
 <div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3><button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
 <div class="p-6 space-y-6">
 <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border"><span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span><input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono"></div>
+<p class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded p-1.5">ℹ️ Le immagini caricate qui vengono richiamate nell'articolo con il percorso <code>/img/...</code> (senza <code>docs/public</code>): è VitePress a pubblicare tutto ciò che sta in <code>docs/public/</code> come radice del sito. Se hai caricato un'immagine direttamente da GitHub, scrivi nell'articolo il percorso <strong>a partire da dopo <code>docs/public</code></strong>, con lo slash iniziale.</p>
 <label class="flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 rounded-lg p-2 cursor-pointer">
 <input type="checkbox" id="opt-webp" checked class="rounded text-emerald-600">
 <span class="font-bold text-emerald-800">⚡ Comprimi automaticamente in WebP prima di caricare (consigliato)</span>
@@ -357,6 +358,19 @@ function showStatus(msg, type='success') { const el = document.getElementById('s
 function loading(s, m="") { const el=document.getElementById('loading-overlay'); if(s){document.getElementById('loading-msg').innerText=m; el.classList.remove('hidden');}else{el.classList.add('hidden');} }
 function toggleMobileView() { const btn = document.getElementById('mobile-toggle-btn'); if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; } else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; } }
 
+// --- Percorso repo <-> percorso pubblico -------------------------------------------------
+// Il sito (VitePress) pubblica tutto quello che sta in docs/public/ alla RADICE del sito.
+// Quindi un file che nel repo è in docs/public/img/x.png va richiamato nell'articolo come /img/x.png.
+// Questa funzione converte SEMPRE un percorso "come scritto nell'articolo" nel vero percorso del repo,
+// gestendo sia chi scrive già correttamente "/img/x.png", sia chi (per errore) incolla il percorso
+// intero copiato da GitHub tipo "docs/public/img/x.png" (evitando così il raddoppio "docs/public/docs/public/...").
+function publicPathToRepoPath(p) {
+  let clean = p.trim().replace(/^\/+/, ''); // togli eventuale slash iniziale
+  // Se il percorso incolla per errore già "docs/public/" davanti, non raddoppiarlo
+  clean = clean.replace(/^docs\/public\//, '');
+  return 'docs/public/' + clean;
+}
+
 // --- NUMERAZIONE AUTOMATICA LEZIONI ---
 // Esegue max `limit` richieste in parallelo alla volta, per non sovraccaricare l'API GitHub
 async function mapLimit(items, limit, fn) {
@@ -492,13 +506,18 @@ async function handleFileUploadLogic(file, isPaste) {
     const buf = await uploadFile.arrayBuffer(); let bin = ''; new Uint8Array(buf).forEach((b) => bin += String.fromCharCode(b));
     const url = `https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${base + name}`;
     const res = await fetch(url, { method: 'PUT', headers: {'Authorization': `token ${creds.token}`, 'Content-Type': 'application/json'}, body: JSON.stringify({message: "Upload media", content: btoa(bin)}) });
-    if(!res.ok) throw new Error("Err Upload");
-    const relPath = '/' + (base + name).replace('docs/public/', '');
+    if(!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).message || ''; } catch(e) {}
+      throw new Error(`Errore upload (${res.status})${detail ? ': ' + detail : ''}`);
+    }
+    // Percorso pubblico corretto: tutto ciò che sta sotto docs/public/ viene servito dalla radice del sito
+    const relPath = '/' + (base + name).replace(/^docs\/public\//, '');
     document.getElementById('meta-image').value = relPath; // AUTO COVER
     const safeAlt = (altText || name).replace(/"/g, '&quot;');
     let tag = uploadFile.type.startsWith('video/') ? `\n<video src="${relPath}" autoplay loop muted playsinline width="100%"></video>\n` : `\n<center>\n\t<img src="${relPath}" alt="${safeAlt}" width="300"/>\n</center>\n`;
     const s = input.selectionStart; input.value = input.value.substring(0, s) + tag + input.value.substring(input.selectionEnd);
-    renderPreview(); showStatus("Fatto!" + (doCompress ? " (compresso in WebP)" : ""));
+    renderPreview(); showStatus("Fatto!" + (doCompress ? " (compresso in WebP)" : "") + ` Percorso: ${relPath}`);
   } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
 }
 
@@ -580,6 +599,12 @@ async function exportPDF() {
 }
 
 // --- CONTROLLO IMMAGINI/LINK PRIMA DI PUBBLICARE ---
+// FIX: prima questa funzione anteponeva SEMPRE "docs/public/" al percorso scritto nell'articolo.
+// Se nell'articolo il percorso era già scritto correttamente come "/img/x.png" andava bene,
+// ma se qualcuno (per errore, o incollando da GitHub) scriveva "docs/public/img/x.png",
+// il controllo produceva "docs/public/docs/public/img/x.png" (raddoppiato) e quindi segnalava
+// SEMPRE l'immagine come mancante, anche se esisteva davvero nel repo.
+// Ora si usa publicPathToRepoPath(), che toglie un eventuale "docs/public/" già presente prima di riaggiungerlo.
 async function checkImages() {
   const creds = getCreds();
   if (!creds.token) return showStatus("Manca il Token (Configurazione, in 📷 Media)", 'error');
@@ -592,18 +617,17 @@ async function checkImages() {
   const missing = [];
   try {
     await mapLimit(allPaths, 6, async (p) => {
-      // Converte il percorso pubblico nel percorso reale nel repo (docs/public/...), gestendo sia /img/x.png sia img/x.png
-      const repoPath = 'docs/public/' + p.replace(/^\//, '');
+      const repoPath = publicPathToRepoPath(p); // FIX: niente più doppio "docs/public/docs/public/"
       try {
         const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${creds.token}` } });
-        if (!r.ok) missing.push(p);
-      } catch (e) { missing.push(p); }
+        if (!r.ok) missing.push(`${p}  →  cercato in: ${repoPath}`);
+      } catch (e) { missing.push(`${p}  →  cercato in: ${repoPath}`); }
     });
     if (missing.length === 0) {
       showStatus(`✅ Tutte le ${allPaths.length} immagini esistono nel repo`);
     } else {
       showStatus(`⚠️ ${missing.length} immagine/i mancante/i su GitHub`, 'error');
-      alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n"));
+      alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n") + "\n\nRicorda: nell'articolo il percorso va scritto SENZA 'docs/public' davanti, es. /img/nome.png");
     }
   } finally {
     loading(false);
@@ -649,8 +673,12 @@ async function fmNavigate(p) {
   list.innerHTML = '<p class="col-span-full text-center text-gray-400">Loading...</p>';
   try {
     const res = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}?t=${Date.now()}`, { headers: {'Authorization': `token ${creds.token}`} });
-    if(!res.ok) throw new Error("Dir not found");
-    const data = await res.json(); if(!Array.isArray(data)) throw new Error("Err Data");
+    if(!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).message || ''; } catch(e) {}
+      throw new Error(`Cartella non trovata (${res.status})${detail ? ': ' + detail : ''} — path: ${p || '(radice repo)'}`);
+    }
+    const data = await res.json(); if(!Array.isArray(data)) throw new Error("Il percorso indicato è un file, non una cartella");
     list.innerHTML = '';
     data.sort((a,b)=>(a.type===b.type)?0:(a.type==='dir'?-1:1)).forEach(i => {
       const isD = i.type === 'dir'; const div = document.createElement('div');
@@ -658,7 +686,7 @@ async function fmNavigate(p) {
       div.innerHTML = `<div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1" onclick="${isD?`fmNavigate('${i.path}')`:`fmSelectFile('${i.path}')`}"><span class="text-xl">${isD?'📁':(i.name.match(/\.(png|jpg|gif)$/)?'🖼️':'📄')}</span><span class="text-sm truncate">${i.name}</span></div><div class="flex gap-1"><button onclick="fmRename('${i.path}','${i.sha}','${i.type}')" class="p-1 hover:bg-gray-200 rounded">✏️</button><button onclick="fmDelete('${i.path}','${i.sha}')" class="p-1 hover:bg-red-100 text-red-500 rounded">🗑️</button></div>`;
       list.appendChild(div);
     });
-  } catch(e) { list.innerHTML = `<p class="text-red-500 col-span-full">${e.message}</p>`; }
+  } catch(e) { list.innerHTML = `<p class="text-red-500 col-span-full p-2">${e.message}</p>`; }
 }
 function fmUp() { if(fmPathCur) fmNavigate(fmPathCur.split('/').slice(0,-1).join('/')); }
 function fmRefresh() { fmNavigate(fmPathCur); }
@@ -667,7 +695,42 @@ async function fmCreateFolder() { const n = prompt("Nome:"); if(!n) return; apiC
 async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
 async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
 async function apiCall(m, p, b, cb) { const c = getCreds(); loading(true); try { await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}`, {method:m, headers:{'Authorization':`token ${c.token}`, 'Content-Type':'application/json'}, body:JSON.stringify(b)}); if(cb) cb(); } catch(e){alert(e);} finally{loading(false);} }
-async function loadFromGitHub() { const c = getCreds(); const p = document.getElementById('gh-path').value.trim(); if(!c.token) return showStatus("No Token", 'error'); loading(true, "Download..."); try { const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, {headers:{'Authorization':`token ${c.token}`}}); if(!res.ok) throw new Error("404"); input.value = b64DecodeUnicode((await res.json()).content); renderPreview(); showStatus("Caricato!"); } catch(e){ showStatus(e.message, 'error'); } finally{loading(false);} }
+
+// --- CARICA ARTICOLO DA GITHUB ---
+// FIX: prima un qualunque errore (path sbagliato, token scaduto, permessi, file non trovato...)
+// veniva mostrato sempre come il generico messaggio "404", il che rendeva impossibile capire
+// la vera causa. Ora viene mostrato lo status HTTP reale, il messaggio restituito da GitHub
+// e il percorso esatto che è stato cercato, così è chiaro subito se il problema è nel path,
+// nel token o nei permessi.
+async function loadFromGitHub() {
+  const c = getCreds();
+  const p = document.getElementById('gh-path').value.trim();
+  if (!c.token) return showStatus("No Token", 'error');
+  if (!p) return showStatus("Nessun percorso file impostato", 'error');
+  loading(true, "Download...");
+  try {
+    const res = await fetch(`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${p}?t=${Date.now()}`, { headers: { 'Authorization': `token ${c.token}` } });
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).message || ''; } catch (e) {}
+      let hint = '';
+      if (res.status === 404) hint = ' — controlla che il percorso sia scritto esattamente come su GitHub (maiuscole/minuscole comprese)';
+      if (res.status === 401) hint = ' — il token non è valido o è scaduto';
+      if (res.status === 403) hint = ' — il token non ha i permessi su questo repo, o è stato superato il rate limit';
+      throw new Error(`Errore caricamento (${res.status})${detail ? ': ' + detail : ''}${hint} — path cercato: "${p}"`);
+    }
+    const data = await res.json();
+    if (Array.isArray(data)) throw new Error(`"${p}" è una cartella, non un file .md`);
+    if (!data.content) throw new Error("Il file non ha contenuto leggibile");
+    input.value = b64DecodeUnicode(data.content);
+    renderPreview();
+    showStatus("Caricato!");
+  } catch (e) {
+    showStatus(e.message, 'error');
+  } finally {
+    loading(false);
+  }
+}
 
 // --- SALVATAGGIO CON RILEVAMENTO CONFLITTI (409) ---
 async function syncTextToGitHub() {
