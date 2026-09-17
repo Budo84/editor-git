@@ -116,7 +116,7 @@ window.MathJax = {
 <div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">📷 Carica Media</h3><button onclick="closeModal('media-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
 <div class="p-6 space-y-6">
 <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-lg border"><span class="text-xs font-bold text-gray-500 uppercase">Cartella:</span><input type="text" id="gh-img-base" value="docs/public/img/" class="flex-1 bg-transparent outline-none text-sm font-mono"></div>
-<p class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded p-1.5">ℹ️ Le immagini caricate qui vengono richiamate nell'articolo con il percorso <code>/img/...</code> (senza <code>docs/public</code>): è VitePress a pubblicare tutto ciò che sta in <code>docs/public/</code> come radice del sito. Se hai caricato un'immagine direttamente da GitHub, scrivi nell'articolo il percorso <strong>a partire da dopo <code>docs/public</code></strong>, con lo slash iniziale.</p>
+<p class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 rounded p-1.5">ℹ️ Le immagini caricate qui vengono richiamate nell'articolo con il percorso <code>/img/...</code> (senza <code>docs/public</code>): è VitePress a pubblicare tutto ciò che sta in <code>docs/public/</code> come radice del sito. Se hai caricato un'immagine direttamente da GitHub, scrivi nell'articolo il percorso <strong>a partire da dopo <code>docs/public</code></strong>, con lo slash iniziale.<br><strong class="text-red-600">⚠️ Lo slash iniziale non è facoltativo:</strong> <code>img/x.png</code> (senza <code>/</code>) manda in errore la build dell'intero sito, non solo quell'immagine. Usa sempre <code>/img/x.png</code>.</p>
 <label class="flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 rounded-lg p-2 cursor-pointer">
 <input type="checkbox" id="opt-webp" checked class="rounded text-emerald-600">
 <span class="font-bold text-emerald-800">⚡ Comprimi automaticamente in WebP prima di caricare (consigliato)</span>
@@ -613,21 +613,40 @@ async function checkImages() {
   const htmlImgs = [...input.value.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1]);
   const allPaths = [...new Set([...mdImgs, ...htmlImgs])].filter(p => !/^https?:\/\//i.test(p) && !p.startsWith('data:'));
   if (allPaths.length === 0) return showStatus("Nessuna immagine locale da controllare");
+
+  // FIX CRITICO: un percorso locale SENZA slash iniziale (es. "img/x.png" invece di "/img/x.png")
+  // manda in crash l'intera build del sito su VitePress/Vite: viene trattato come un import relativo
+  // al file .md (Rollup prova a risolverlo come modulo JS, non come asset pubblico) e la build fallisce
+  // con "Rollup failed to resolve import", anche se il file ESISTE davvero nel repo.
+  // Questi percorsi vanno segnalati SEMPRE, indipendentemente dal controllo su GitHub.
+  const noSlash = allPaths.filter(p => !p.startsWith('/'));
+  const withSlash = allPaths.filter(p => p.startsWith('/'));
+
   loading(true, `Controllo ${allPaths.length} immagini...`);
   const missing = [];
   try {
-    await mapLimit(allPaths, 6, async (p) => {
-      const repoPath = publicPathToRepoPath(p); // FIX: niente più doppio "docs/public/docs/public/"
+    await mapLimit(withSlash, 6, async (p) => {
+      const repoPath = publicPathToRepoPath(p); // niente più doppio "docs/public/docs/public/"
       try {
         const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${repoPath}`, { headers: { 'Authorization': `token ${creds.token}` } });
         if (!r.ok) missing.push(`${p}  →  cercato in: ${repoPath}`);
       } catch (e) { missing.push(`${p}  →  cercato in: ${repoPath}`); }
     });
-    if (missing.length === 0) {
-      showStatus(`✅ Tutte le ${allPaths.length} immagini esistono nel repo`);
+
+    let report = '';
+    if (noSlash.length > 0) {
+      report += `🚫 ${noSlash.length} percorso/i SENZA slash iniziale — ROMPONO LA BUILD del sito anche se il file esiste su GitHub:\n`
+        + noSlash.map(p => `   "${p}"   →   correggi in   "/${p}"`).join('\n') + '\n\n';
+    }
+    if (missing.length > 0) {
+      report += `⚠️ ${missing.length} immagine/i non trovate su GitHub:\n` + missing.join('\n');
+    }
+
+    if (!report) {
+      showStatus(`✅ Tutte le ${allPaths.length} immagini esistono e hanno un percorso valido`);
     } else {
-      showStatus(`⚠️ ${missing.length} immagine/i mancante/i su GitHub`, 'error');
-      alert("Immagini NON trovate nel repository:\n\n" + missing.join("\n") + "\n\nRicorda: nell'articolo il percorso va scritto SENZA 'docs/public' davanti, es. /img/nome.png");
+      showStatus(`⚠️ Problemi nelle immagini: controlla il dettaglio`, 'error');
+      alert(report + (report.includes('🚫') ? "\n\nRicorda: ogni immagine dentro docs/public/ va richiamata nell'articolo con lo slash iniziale, es. /img/nome.png (mai 'docs/public' davanti, mai senza slash)." : ""));
     }
   } finally {
     loading(false);
