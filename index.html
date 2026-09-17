@@ -67,7 +67,8 @@ window.MathJax = {
 <div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
 <div class="flex items-center gap-2">
 <a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline">🛠️</a>
-<button onclick="openModal('meta-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
+<button onclick="startNewArticle()" class="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-green-200 hover:bg-green-200" title="Svuota l'editor e comincia un articolo nuovo">🆕 Nuovo</button>
+<button onclick="openMetaModal()" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
 <button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200">📷 Media</button>
 <button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200">📂 File</button>
 <a href="offline-editor/markbud.html" target="_blank" class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-teal-200 hover:bg-teal-100 transition no-underline" title="Apri Editor Offline">💻 Offline</a>
@@ -97,6 +98,7 @@ window.MathJax = {
 <div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
 <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Nome file da salvare</label><input type="text" id="meta-filepath" placeholder="docs/blog/nome-articolo.md" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"><p class="text-[10px] text-gray-400 mt-1">Si aggiorna da solo mentre scrivi il titolo. Puoi modificarlo a mano, oppure usa il pulsante qui sotto per farti suggerire il numero giusto.</p></div>
 <button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,6 +199,42 @@ window.MathJax = {
 const input = document.getElementById('markdown-input');
 const preview = document.getElementById('preview-output');
 const editorCol = document.getElementById('editor-col');
+let skipOverwriteConfirm = false; // usato da "Nuovo Articolo" per non chiedere conferma su un editor già svuotato apposta
+
+// Scrive il percorso del file sia nel campo dell'header sia in quello dentro il modal "Dati",
+// così restano sempre sincronizzati qualunque sia il punto da cui viene aggiornato.
+function setFilePath(path) {
+  document.getElementById('gh-path').value = path;
+  const mfp = document.getElementById('meta-filepath');
+  if (mfp) mfp.value = path;
+}
+
+// Apre il modal "Dati" assicurandosi che il campo "Nome file" mostri il percorso attuale
+function openMetaModal() {
+  const mfp = document.getElementById('meta-filepath');
+  if (mfp) mfp.value = document.getElementById('gh-path').value;
+  openModal('meta-modal');
+}
+
+// Svuota l'editor e i campi per iniziare un articolo nuovo, senza il fastidioso prompt "Sovrascrivo?"
+// (quel prompt ha senso quando stai per sovrascrivere un TESTO ESISTENTE non salvato, non quando
+// hai appena detto esplicitamente "voglio iniziare da zero").
+function startNewArticle() {
+  const hasContent = input.value.trim().length > 10;
+  if (hasContent && !confirm("Il contenuto attuale nell'editor non è ancora salvato. Vuoi scartarlo e iniziare un nuovo articolo?")) return;
+  input.value = '';
+  setFilePath('');
+  document.getElementById('meta-title').value = '';
+  document.getElementById('meta-desc').value = '';
+  document.getElementById('meta-image').value = '/img/default.jpg';
+  document.getElementById('meta-duration').value = '';
+  document.getElementById('meta-draft').value = 'false';
+  document.querySelectorAll('input[name="target-opt"]').forEach(c => c.checked = false);
+  document.getElementById('meta-date').valueAsDate = new Date();
+  renderPreview();
+  skipOverwriteConfirm = true; // il prossimo click su "Inserisci" nel modal non deve chiedere conferma
+  openMetaModal();
+}
 
 // --- 1. INIT & EVENTS ---
 window.addEventListener('load', () => {
@@ -413,7 +451,7 @@ async function suggestNextNumber() {
     const nextNum = maxNum + 1;
     const title = document.getElementById('meta-title').value.trim();
     const slug = title ? title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-') : 'nuova-lezione';
-    document.getElementById('gh-path').value = `docs/blog/${nextNum}-${slug}.md`;
+    setFilePath(`docs/blog/${nextNum}-${slug}.md`);
     showStatus(`Categoria "${cat}": trovate ${found} lezioni, prossimo numero = ${nextNum}`);
   } catch (e) {
     showStatus(e.message, 'error');
@@ -423,7 +461,12 @@ async function suggestNextNumber() {
 }
 
 // --- METADATA ---
-function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); document.getElementById('gh-path').value = `docs/blog/${slug}.md`; }
+function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); setFilePath(`docs/blog/${slug}.md`); }
+// Il campo "Nome file" dentro il modal è modificabile a mano: se lo cambi, si aggiorna anche l'header
+document.addEventListener('DOMContentLoaded', () => {
+  const mfp = document.getElementById('meta-filepath');
+  if (mfp) mfp.addEventListener('input', (e) => { document.getElementById('gh-path').value = e.target.value; });
+});
 function applyMetadata() {
   const title = document.getElementById('meta-title').value;
   const safeDesc = document.getElementById('meta-desc').value.replace(/'/g, "''");
@@ -443,8 +486,10 @@ image: ${img}
 
 # ${title}
 `;
-  if(input.value.length>10 && !confirm("Sovrascrivo?")) return;
+  if (input.value.length > 10 && !skipOverwriteConfirm && !confirm("Il testo attuale nell'editor verrà sostituito con questo nuovo frontmatter. Continuare?")) return;
+  skipOverwriteConfirm = false;
   input.value = t; renderPreview(); closeModal('meta-modal');
+  showStatus(`Pronto per essere salvato come: ${document.getElementById('gh-path').value || '(nessun percorso impostato)'}`);
 }
 
 // --- COMPRESSIONE WEBP (client-side, prima dell'upload) ---
@@ -709,7 +754,7 @@ async function fmNavigate(p) {
 }
 function fmUp() { if(fmPathCur) fmNavigate(fmPathCur.split('/').slice(0,-1).join('/')); }
 function fmRefresh() { fmNavigate(fmPathCur); }
-function fmSelectFile(p) { if(p.endsWith('.md') && confirm("Aprire?")) { document.getElementById('gh-path').value = p; closeModal('file-modal'); loadFromGitHub(); } }
+function fmSelectFile(p) { if(p.endsWith('.md') && confirm("Aprire?")) { setFilePath(p); closeModal('file-modal'); loadFromGitHub(); } }
 async function fmCreateFolder() { const n = prompt("Nome:"); if(!n) return; apiCall('PUT', (fmPathCur?fmPathCur+'/':'')+n+'/.keep', {message:"New Folder", content:""}, ()=>fmRefresh()); }
 async function fmDelete(p,s) { if(confirm("Del?")) apiCall('DELETE', p, {message:"Del", sha:s}, ()=>fmRefresh()); }
 async function fmRename(p,s,t) { if(t==='dir') return alert("No dir rename"); const n = prompt("New Name:", p.split('/').pop()); if(!n) return; const creds = getCreds(); loading(true); try { const g = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${p}`,{headers:{'Authorization':`token ${creds.token}`}}); const d = await g.json(); await apiCall('PUT', p.substring(0,p.lastIndexOf('/'))+'/'+n, {message:"Ren", content:d.content}); await apiCall('DELETE', p, {message:"Del Old", sha:s}); fmRefresh(); } catch(e){alert(e);} finally{loading(false);} }
