@@ -312,6 +312,14 @@ function preProcessMarkdown(text) {
   });
 }
 
+// FIX: il Markdown standard richiede uno spazio dopo i cancelletti di un titolo (## Titolo).
+// Se manca lo spazio (##Titolo), non viene riconosciuto come titolo e resta testo semplice
+// con i cancelletti visibili. Questa funzione lo corregge automaticamente, sia in anteprima
+// che nel PDF esportato, senza dover riscrivere a mano l'articolo.
+function fixHeadingSpacing(text) {
+  return text.replace(/^(#{1,6})(?=[^#\s])/gm, '$1 ');
+}
+
 async function renderPreview() {
   if (typeof marked === 'undefined') {
     preview.innerHTML = `<div class="p-4 text-red-600 font-bold bg-red-50 border border-red-200 rounded">⚠️ Attendere caricamento librerie...</div>`;
@@ -319,6 +327,8 @@ async function renderPreview() {
   }
   // 1. Rimuovi Frontmatter (YAML)
   let content = input.value.replace(/^\s*---[\s\S]*?---\s*/, '');
+  // 1b. Corregge i titoli scritti senza spazio dopo i cancelletti
+  content = fixHeadingSpacing(content);
   // 2. Pre-processa i box colorati
   content = preProcessMarkdown(content);
   try {
@@ -566,7 +576,15 @@ async function handleFileUploadLogic(file, isPaste) {
   } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
 }
 
-// --- ESPORTAZIONE PDF (senza troncamenti strani) ---
+// --- ESPORTAZIONE PDF (senza troncamenti strani, e senza far crashare html2canvas) ---
+// FIX: prima il PDF veniva generato appendendo un <div> direttamente dentro document.body.
+// Il body dell'editor ha classi Tailwind (bg-gray-50, text-gray-800): nella versione di Tailwind
+// servita dal CDN, i colori sono scritti in formato oklch(), che html2canvas (usato internamente
+// da html2pdf.js) non sa interpretare. Anche se il contenuto dell'articolo non usa classi Tailwind,
+// html2canvas comunque "fotografa" anche gli stili ereditati dagli antenati (compreso il body),
+// incontra l'oklch e si blocca con un errore — quindi il PDF non veniva mai prodotto.
+// Ora il contenuto viene copiato in un iframe con un documento HTML tutto suo, senza Tailwind:
+// così il problema non si può ripresentare, qualunque colore usi in futuro il resto dell'editor.
 async function exportPDF() {
   if (typeof html2pdf === 'undefined') return showStatus("Libreria PDF non ancora caricata, riprova tra un istante", 'error');
   // 1. Assicura che l'anteprima sia aggiornata (marked + MathJax + Mermaid)
@@ -584,61 +602,113 @@ async function exportPDF() {
     duration = get('duration');
   }
   const subtitleParts = [category, target ? `Classe: ${target}` : '', duration ? `${duration} min` : ''].filter(Boolean);
-  // 3. Costruisce un contenitore "pulito" fuori schermo, con CSS dedicato alla stampa
-  // (foglio A4, niente sfondo grigio dell'editor, e soprattutto le regole anti-troncamento)
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:190mm; background:#fff; color:#1e293b; font-family:sans-serif;';
-  wrapper.innerHTML = `
-    <style>
-      .pdf-root { padding: 4mm; }
-      .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
-      .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-      .pdf-root h1, .pdf-root h2, .pdf-root h3 {
-        break-after: avoid; page-break-after: avoid; /* niente titoli isolati a fine pagina */
-        break-inside: avoid; page-break-inside: avoid;
-      }
-      .pdf-root p, .pdf-root li { orphans: 3; widows: 3; }
-      .pdf-root img {
-        max-width: 100%;
-        max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
-        break-inside: avoid; page-break-inside: avoid;
-        display: block; margin: 10px auto;
-      }
-      .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
-        break-inside: avoid; page-break-inside: avoid;
-      }
-      .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; }
-      .pdf-root th, .pdf-root td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
-      .pdf-root pre { background:#1f2937; color:#fff; padding:10px; border-radius:6px; font-size:11px; overflow-wrap: break-word; white-space: pre-wrap; }
-      .pdf-root code { font-family: monospace; }
-      .pdf-root .custom-block { border-left: 4px solid #3b82f6; background:#eff6ff; padding:10px; border-radius:6px; margin:10px 0; }
-    </style>
-    <div class="pdf-root">
-      <h1>${title}</h1>
-      ${subtitleParts.length ? `<div class="pdf-subtitle">${subtitleParts.join(' · ')}</div>` : ''}
-      ${preview.innerHTML}
-    </div>`;
-  document.body.appendChild(wrapper);
-  const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const opt = {
-    margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
-    filename: `${fileSlug}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: {
-      mode: ['css', 'legacy'],
-      avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
-    }
-  };
-  loading(true, "Generazione PDF...");
+
+  // 3. Crea un iframe isolato con un documento pulito (niente Tailwind, niente oklch)
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:210mm; height:0; border:0;';
+  document.body.appendChild(iframe);
+  const idoc = iframe.contentDocument;
   try {
-    await html2pdf().set(opt).from(wrapper.querySelector('.pdf-root')).save();
+    idoc.open();
+    idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <base href="${location.origin}/">
+      <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #ffffff; color: #1e293b; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+        .pdf-root { padding: 4mm; width: 190mm; }
+        .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
+        .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .pdf-root h1, .pdf-root h2, .pdf-root h3 { break-after: avoid; page-break-after: avoid; break-inside: avoid; page-break-inside: avoid; color: #1e3a8a; }
+        .pdf-root p, .pdf-root li { orphans: 3; widows: 3; margin-bottom: 0.6em; line-height: 1.5; }
+        .pdf-root ul { list-style: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .pdf-root ol { list-style: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .pdf-root a { color: #2563eb; text-decoration: underline; }
+        .pdf-root img, .pdf-root video {
+          max-width: 100%;
+          max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
+          break-inside: avoid; page-break-inside: avoid;
+          display: block; margin: 10px auto;
+        }
+        .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
+          break-inside: avoid; page-break-inside: avoid;
+        }
+        .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; margin-bottom: 1em; }
+        .pdf-root th, .pdf-root td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+        .pdf-root pre { background: #1f2937; color: #fff; padding: 10px; border-radius: 6px; font-size: 11px; overflow-wrap: break-word; white-space: pre-wrap; }
+        .pdf-root code { font-family: monospace; background: #f3f4f6; padding: 0.1em 0.3em; border-radius: 3px; }
+        .pdf-root pre code { background: transparent; padding: 0; }
+        .pdf-root blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; margin: 0 0 1em; }
+        .pdf-root .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
+        .pdf-root .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
+        .pdf-root .tip { border-color: #10b981; background-color: #ecfdf5; }
+        .pdf-root .warning { border-color: #f59e0b; background-color: #fffbeb; }
+        .pdf-root .danger { border-color: #ef4444; background-color: #fef2f2; }
+        .pdf-root .info { border-color: #3b82f6; background-color: #eff6ff; }
+      </style>
+      </head><body>
+        <div class="pdf-root">
+          <h1></h1>
+          <div class="pdf-subtitle" style="display:none"></div>
+          <div class="pdf-content"></div>
+        </div>
+      </body></html>`);
+    idoc.close();
+
+    // Popola titolo (come testo semplice, non HTML), sottotitolo e contenuto vero e proprio
+    idoc.querySelector('.pdf-root h1').textContent = title;
+    if (subtitleParts.length) {
+      const sub = idoc.querySelector('.pdf-subtitle');
+      sub.textContent = subtitleParts.join(' · ');
+      sub.style.display = '';
+    }
+    // FIX: molti articoli iniziano anche loro con un titolo "# Titolo" dentro al testo (lo stesso
+    // che abbiamo appena scritto sopra come intestazione del PDF). Se lo lasciamo, il titolo compare
+    // due volte di fila. Lo togliamo dalla copia usata per il PDF solo se coincide con il titolo,
+    // lasciando intatto l'articolo originale nell'editor.
+    const contentClone = document.createElement('div');
+    contentClone.innerHTML = preview.innerHTML;
+    const firstHeading = contentClone.querySelector('h1');
+    if (firstHeading && firstHeading.textContent.trim().toLowerCase() === title.trim().toLowerCase()) {
+      firstHeading.remove();
+    }
+    idoc.querySelector('.pdf-content').innerHTML = contentClone.innerHTML;
+
+    // Dà un istante al browser per caricare le immagini appena inserite nell'iframe
+    await new Promise(r => setTimeout(r, 300));
+
+    // FIX: l'iframe partiva con altezza 0 (serviva solo a tenerlo invisibile durante la
+    // preparazione). Se l'altezza resta 0, tutto il contenuto che sfora quell'area rischia
+    // di essere tagliato via silenziosamente dalla cattura, senza nessun errore: è quello
+    // che causava i PDF "spezzati" a metà frase. Ora lo ridimensioniamo alla vera altezza
+    // del contenuto prima di fare lo scatto.
+    const contentHeight = idoc.body.scrollHeight;
+    iframe.style.height = contentHeight + 'px';
+    await new Promise(r => setTimeout(r, 50));
+
+    const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const opt = {
+      margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
+      filename: `${fileSlug}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: {
+        // FIX: usare insieme 'css' e 'legacy' può far scattare due meccanismi di spaginazione
+        // indipendenti che si accavallano, causando pezzi di contenuto duplicati o tagliati
+        // proprio a cavallo tra una pagina e l'altra. Con solo 'css' ci si affida unicamente
+        // alle regole break-inside:avoid già scritte sopra, molto più prevedibili.
+        mode: ['css'],
+        avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
+      }
+    };
+    loading(true, "Generazione PDF...");
+    await html2pdf().set(opt).from(idoc.querySelector('.pdf-root')).save();
     showStatus("PDF generato!");
   } catch (e) {
+    console.error(e);
     showStatus("Errore PDF: " + e.message, 'error');
   } finally {
-    document.body.removeChild(wrapper);
+    document.body.removeChild(iframe);
     loading(false);
   }
 }
