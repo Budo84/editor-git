@@ -9,7 +9,6 @@
 <meta name="theme-color" content="#3b82f6">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 window.MathJax = {
   tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -85,7 +84,7 @@ window.MathJax = {
 </div>
 <div class="flex items-center gap-2 ml-auto sm:ml-2">
 <span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
-<button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Esporta lezione in PDF">📄</button>
+<button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Stampa / Salva come PDF">📄</button>
 <button onclick="checkImages()" class="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition" title="Controlla immagini/link prima di pubblicare">🔍</button>
 <button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
 <button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
@@ -576,17 +575,18 @@ async function handleFileUploadLogic(file, isPaste) {
   } catch(e) { showStatus(e.message, 'error'); } finally { loading(false); }
 }
 
-// --- ESPORTAZIONE PDF (senza troncamenti strani, e senza far crashare html2canvas) ---
-// FIX: prima il PDF veniva generato appendendo un <div> direttamente dentro document.body.
-// Il body dell'editor ha classi Tailwind (bg-gray-50, text-gray-800): nella versione di Tailwind
-// servita dal CDN, i colori sono scritti in formato oklch(), che html2canvas (usato internamente
-// da html2pdf.js) non sa interpretare. Anche se il contenuto dell'articolo non usa classi Tailwind,
-// html2canvas comunque "fotografa" anche gli stili ereditati dagli antenati (compreso il body),
-// incontra l'oklch e si blocca con un errore — quindi il PDF non veniva mai prodotto.
-// Ora il contenuto viene copiato in un iframe con un documento HTML tutto suo, senza Tailwind:
-// così il problema non si può ripresentare, qualunque colore usi in futuro il resto dell'editor.
+// --- ESPORTAZIONE PDF TRAMITE STAMPA NATIVA DEL BROWSER ---
+// CAMBIO DI STRATEGIA: le versioni precedenti usavano html2canvas/html2pdf.js per "fotografare"
+// la pagina e ricostruirla in un PDF via JavaScript. Questo approccio si è rivelato fragile su più
+// fronti (colori oklch di Tailwind non supportati, contenuto tagliato per altezza non calcolata
+// bene, spaginazione imprevedibile che duplicava o tagliava pezzi di testo).
+// Ora invece prepariamo un documento di stampa pulito dentro un iframe isolato (niente Tailwind,
+// stessa idea di isolamento di prima) e richiamiamo la funzione di stampa NATIVA del browser
+// (iframe.contentWindow.print()). Da lì l'utente sceglie "Salva come PDF" tra le stampanti
+// disponibili: è lo stesso motore che il browser usa per stampare qualsiasi pagina web, quindi
+// gestisce da solo immagini, interruzioni di pagina e font in modo affidabile, senza bisogno di
+// nessuna libreria esterna.
 async function exportPDF() {
-  if (typeof html2pdf === 'undefined') return showStatus("Libreria PDF non ancora caricata, riprova tra un istante", 'error');
   // 1. Assicura che l'anteprima sia aggiornata (marked + MathJax + Mermaid)
   await renderPreview();
   // Piccola attesa per dare tempo a MathJax/Mermaid (asincroni) di completare il rendering
@@ -603,33 +603,43 @@ async function exportPDF() {
   }
   const subtitleParts = [category, target ? `Classe: ${target}` : '', duration ? `${duration} min` : ''].filter(Boolean);
 
-  // 3. Crea un iframe isolato con un documento pulito (niente Tailwind, niente oklch)
+  // Toglie un eventuale "# Titolo" duplicato all'inizio dell'articolo (lo stesso già mostrato
+  // come intestazione), così il titolo non compare due volte nella stampa.
+  const contentClone = document.createElement('div');
+  contentClone.innerHTML = preview.innerHTML;
+  const firstHeading = contentClone.querySelector('h1');
+  if (firstHeading && firstHeading.textContent.trim().toLowerCase() === title.trim().toLowerCase()) {
+    firstHeading.remove();
+  }
+
+  loading(true, "Preparo la pagina di stampa...");
+  // 3. Crea un iframe isolato con un documento di stampa pulito (niente Tailwind, niente oklch)
   const iframe = document.createElement('iframe');
   iframe.style.cssText = 'position:fixed; left:-9999px; top:0; width:210mm; height:0; border:0;';
   document.body.appendChild(iframe);
   const idoc = iframe.contentDocument;
   try {
     idoc.open();
-    idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title.replace(/[<>]/g, '')}</title>
       <base href="${location.origin}/">
       <style>
+        @page { size: A4; margin: 16mm 14mm; }
         * { box-sizing: border-box; }
-        body { margin: 0; background: #ffffff; color: #1e293b; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
-        .pdf-root { padding: 4mm; width: 190mm; }
+        html, body { margin: 0; background: #ffffff; color: #1e293b; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
         .pdf-root h1 { font-size: 22px; color: #1e3a8a; margin: 0 0 2px; }
         .pdf-root .pdf-subtitle { font-size: 12px; color: #64748b; margin-bottom: 14px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        .pdf-root h1, .pdf-root h2, .pdf-root h3 { break-after: avoid; page-break-after: avoid; break-inside: avoid; page-break-inside: avoid; color: #1e3a8a; }
+        .pdf-root h1, .pdf-root h2, .pdf-root h3 { break-after: avoid; page-break-after: avoid; color: #1e3a8a; }
+        .pdf-root h2 { font-size: 18px; } .pdf-root h3 { font-size: 15px; }
         .pdf-root p, .pdf-root li { orphans: 3; widows: 3; margin-bottom: 0.6em; line-height: 1.5; }
         .pdf-root ul { list-style: disc; padding-left: 1.5em; margin-bottom: 1em; }
         .pdf-root ol { list-style: decimal; padding-left: 1.5em; margin-bottom: 1em; }
         .pdf-root a { color: #2563eb; text-decoration: underline; }
         .pdf-root img, .pdf-root video {
           max-width: 100%;
-          max-height: 230mm; /* un'immagine non supera mai un'intera pagina: non verrà mai tagliata a metà */
           break-inside: avoid; page-break-inside: avoid;
           display: block; margin: 10px auto;
         }
-        .pdf-root table, .pdf-root tr, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
+        .pdf-root table, .pdf-root pre, .pdf-root blockquote, .pdf-root .custom-block {
           break-inside: avoid; page-break-inside: avoid;
         }
         .pdf-root table { border-collapse: collapse; width: 100%; font-size: 12px; margin-bottom: 1em; }
@@ -644,6 +654,10 @@ async function exportPDF() {
         .pdf-root .warning { border-color: #f59e0b; background-color: #fffbeb; }
         .pdf-root .danger { border-color: #ef4444; background-color: #fef2f2; }
         .pdf-root .info { border-color: #3b82f6; background-color: #eff6ff; }
+        /* Forza la stampa dei colori di sfondo (i browser a volte li omettono di default per risparmiare inchiostro) */
+        @media print {
+          html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
       </style>
       </head><body>
         <div class="pdf-root">
@@ -654,62 +668,35 @@ async function exportPDF() {
       </body></html>`);
     idoc.close();
 
-    // Popola titolo (come testo semplice, non HTML), sottotitolo e contenuto vero e proprio
     idoc.querySelector('.pdf-root h1').textContent = title;
     if (subtitleParts.length) {
       const sub = idoc.querySelector('.pdf-subtitle');
       sub.textContent = subtitleParts.join(' · ');
       sub.style.display = '';
     }
-    // FIX: molti articoli iniziano anche loro con un titolo "# Titolo" dentro al testo (lo stesso
-    // che abbiamo appena scritto sopra come intestazione del PDF). Se lo lasciamo, il titolo compare
-    // due volte di fila. Lo togliamo dalla copia usata per il PDF solo se coincide con il titolo,
-    // lasciando intatto l'articolo originale nell'editor.
-    const contentClone = document.createElement('div');
-    contentClone.innerHTML = preview.innerHTML;
-    const firstHeading = contentClone.querySelector('h1');
-    if (firstHeading && firstHeading.textContent.trim().toLowerCase() === title.trim().toLowerCase()) {
-      firstHeading.remove();
-    }
     idoc.querySelector('.pdf-content').innerHTML = contentClone.innerHTML;
 
-    // Dà un istante al browser per caricare le immagini appena inserite nell'iframe
-    await new Promise(r => setTimeout(r, 300));
+    // 4. Aspetta che tutte le immagini dentro l'iframe siano davvero caricate prima di stampare,
+    // altrimenti la finestra di stampa potrebbe aprirsi con immagini ancora vuote/rotte.
+    const imgs = Array.from(idoc.images || []);
+    await Promise.race([
+      Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => { img.onload = img.onerror = res; }))),
+      new Promise(res => setTimeout(res, 4000)) // non aspettare all'infinito se un'immagine non carica
+    ]);
 
-    // FIX: l'iframe partiva con altezza 0 (serviva solo a tenerlo invisibile durante la
-    // preparazione). Se l'altezza resta 0, tutto il contenuto che sfora quell'area rischia
-    // di essere tagliato via silenziosamente dalla cattura, senza nessun errore: è quello
-    // che causava i PDF "spezzati" a metà frase. Ora lo ridimensioniamo alla vera altezza
-    // del contenuto prima di fare lo scatto.
-    const contentHeight = idoc.body.scrollHeight;
-    iframe.style.height = contentHeight + 'px';
-    await new Promise(r => setTimeout(r, 50));
-
-    const fileSlug = (title || 'lezione').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const opt = {
-      margin: [12, 10, 14, 10], // top, left, bottom, right (mm) - margine extra in basso per non "schiacciare" l'ultima riga
-      filename: `${fileSlug}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: {
-        // FIX: usare insieme 'css' e 'legacy' può far scattare due meccanismi di spaginazione
-        // indipendenti che si accavallano, causando pezzi di contenuto duplicati o tagliati
-        // proprio a cavallo tra una pagina e l'altra. Con solo 'css' ci si affida unicamente
-        // alle regole break-inside:avoid già scritte sopra, molto più prevedibili.
-        mode: ['css'],
-        avoid: ['img', 'table', 'tr', 'pre', 'blockquote', '.custom-block', 'h1', 'h2', 'h3', 'li']
-      }
-    };
-    loading(true, "Generazione PDF...");
-    await html2pdf().set(opt).from(idoc.querySelector('.pdf-root')).save();
-    showStatus("PDF generato!");
+    loading(false);
+    showStatus('Si apre la finestra di stampa: scegli "Salva come PDF" tra le stampanti disponibili');
+    // 5. Richiama la stampa nativa del browser, sull'iframe isolato (non sull'editor)
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
   } catch (e) {
     console.error(e);
-    showStatus("Errore PDF: " + e.message, 'error');
-  } finally {
-    document.body.removeChild(iframe);
+    showStatus("Errore nella preparazione della stampa: " + e.message, 'error');
     loading(false);
+  } finally {
+    // Non c'è un evento affidabile su tutti i browser per "la stampa è finita": l'iframe viene
+    // rimosso dopo un minuto, tempo più che sufficiente per completare o annullare la stampa.
+    setTimeout(() => { if (iframe.parentNode) document.body.removeChild(iframe); }, 60000);
   }
 }
 
