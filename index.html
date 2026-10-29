@@ -96,6 +96,7 @@ window.MathJax = {
   .toolbar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-bottom:1px solid var(--line);
     overflow-x:auto;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .toolbar::-webkit-scrollbar{display:none}
+  @media (min-width:900px){ .toolbar{flex-wrap:wrap;overflow:visible;padding:8px 14px} }
   .tb-group{display:flex;align-items:center;gap:2px;padding:3px;background:#fff;border:1px solid var(--line);border-radius:11px;flex-shrink:0}
   .fmt-btn{min-width:36px;height:36px;padding:0 9px;border-radius:8px;border:0;background:transparent;color:#334155;font-size:13px;font-weight:700;
     display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s,transform .08s}
@@ -105,7 +106,7 @@ window.MathJax = {
   .fmt-btn.t-tip{background:#ecfdf5;color:#047857} .fmt-btn.t-info{background:#eff6ff;color:#1d4ed8}
   .fmt-btn.t-warn{background:#fffbeb;color:#b45309} .fmt-btn.t-danger{background:#fef2f2;color:#b91c1c}
   .fmt-btn.t-tip:hover,.fmt-btn.t-info:hover,.fmt-btn.t-warn:hover,.fmt-btn.t-danger:hover{filter:brightness(.95)}
-  select.fmt-btn{appearance:none;-webkit-appearance:none;padding:0 10px;background:#eef2ff;color:#4338ca;cursor:pointer;max-width:150px}
+  select.fmt-btn{appearance:none;-webkit-appearance:none;padding:0 8px;background:#eef2ff;color:#4338ca;cursor:pointer;width:112px;text-overflow:ellipsis}
   select.fmt-btn.sky{background:#f0f9ff;color:#0369a1}
   .tb-sep{width:1px;height:20px;background:var(--line);flex-shrink:0}
 
@@ -115,6 +116,7 @@ window.MathJax = {
     #editor-col,#preview-output{width:100%;border-right:0}
     .view-edit #preview-output{display:none}
     .view-preview #editor-col{display:none}
+    body.show-preview .toolbar{display:none}
     .mobile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
       background:#fff;border-top:1px solid var(--line);flex-shrink:0;box-shadow:0 -4px 14px rgba(15,23,42,.05)}
     .mobile-tabs button{height:44px;border-radius:12px;border:1px solid var(--line);background:#f8fafc;color:#475569;font-weight:800;font-size:14px;cursor:pointer;transition:all .15s}
@@ -289,8 +291,6 @@ window.MathJax = {
 </div>
 </div>
 
-<div id="editor-area" class="view-edit">
-<div id="editor-col">
 <div class="toolbar" role="toolbar" aria-label="Formattazione">
 <div class="tb-group">
 <button onclick="fmt('**', '**')" class="fmt-btn" title="Grassetto (Ctrl+B)"><b>B</b></button>
@@ -340,6 +340,8 @@ window.MathJax = {
 <button onclick="fmt('::: danger 🔥 PERICOLO\n', '\n:::\n')" class="fmt-btn t-danger" title="Riquadro pericolo">🔥</button>
 </div>
 </div>
+<div id="editor-area" class="view-edit">
+<div id="editor-col">
 <textarea id="markdown-input" placeholder="Caricamento librerie..." lang="it" spellcheck="true"></textarea>
 </div>
 <div id="preview-output" class="prose"></div>
@@ -636,6 +638,7 @@ function setMobileView(mode) {
   const area = document.getElementById('editor-area');
   area.classList.toggle('view-preview', mode === 'preview');
   area.classList.toggle('view-edit', mode !== 'preview');
+  document.body.classList.toggle('show-preview', mode === 'preview');
   document.getElementById('tab-edit').classList.toggle('active', mode !== 'preview');
   document.getElementById('tab-preview').classList.toggle('active', mode === 'preview');
   if (mode === 'preview') { renderPreview(); preview.scrollTop = 0; } else { input.focus({ preventScroll: true }); }
