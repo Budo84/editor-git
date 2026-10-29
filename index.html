@@ -2,11 +2,11 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proflama Editor Stable</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Proflama Editor</title>
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3b82f6">
+<meta name="theme-color" content="#2563eb">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 <script>
@@ -22,39 +22,172 @@ window.MathJax = {
   window.mermaid = mermaid;
 </script>
 <style>
-  body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-  #editor-area { flex: 1; display: flex; overflow: hidden; position: relative; }
-  textarea { resize: none; outline: none; transition: all 0.2s; }
-  .modal { transition: opacity 0.2s ease-in-out; }
-  .modal.hidden { opacity: 0; pointer-events: none; }
-  .modal:not(.hidden) { opacity: 1; pointer-events: auto; }
-  /* Typography & Preview */
-  .prose { padding-bottom: 5rem; }
-  .prose h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; border-bottom: 1px solid #eee; color: #1e3a8a; }
-  .prose h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; color: #1e40af; }
-  .prose h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; color: #2563eb; }
-  .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
-  .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
-  .prose p { margin-bottom: 1em; line-height: 1.6; }
-  .prose blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; color: #4b5563; font-style: italic; }
-  .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: #e11d48; font-size: 0.9em; }
-  .prose pre { background-color: #1f2937; color: white; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
-  .prose pre code { background-color: transparent; color: inherit; padding: 0; }
-  .prose img, .prose video { max-width: 100%; border-radius: 8px; margin: 1em 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-  .prose a { color: #2563eb; text-decoration: underline; }
-  /* Custom Box */
-  .custom-block { padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid; background-color: #f9fafb; }
-  .custom-block-title { font-weight: bold; margin-bottom: 0.5rem; display: block; }
-  .tip { border-color: #10b981; background-color: #ecfdf5; }
-  .warning { border-color: #f59e0b; background-color: #fffbeb; }
-  .danger { border-color: #ef4444; background-color: #fef2f2; }
-  .info { border-color: #3b82f6; background-color: #eff6ff; }
-  .fmt-btn { @apply p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded text-sm font-semibold border border-transparent hover:border-blue-100 transition min-w-[30px] flex justify-center items-center; }
-  /* Drag & Drop */
-  #markdown-input.drag-over { background-color: #eff6ff; outline: 3px dashed #3b82f6; outline-offset: -6px; }
+  /* ============ DESIGN TOKENS ============ */
+  :root{
+    --bg:#f1f5f9; --surface:#ffffff; --line:#e2e8f0; --text:#0f172a; --muted:#64748b;
+    --brand:#2563eb; --brand-d:#1d4ed8; --brand-soft:#eff6ff; --r:12px;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 6px 18px rgba(15,23,42,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  html{-webkit-text-size-adjust:100%}
+  body.app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--text);
+    font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;-webkit-tap-highlight-color:transparent}
+  textarea{resize:none;outline:none}
+  button{font-family:inherit}
+  .modal{transition:opacity .2s ease-in-out}
+  .modal.hidden{opacity:0;pointer-events:none}
+  .modal:not(.hidden){opacity:1;pointer-events:auto}
+
+  /* ============ BARRA SUPERIORE ============ */
+  #app-header{background:var(--surface);border-bottom:1px solid var(--line);box-shadow:var(--shadow);z-index:20;flex-shrink:0;
+    padding-top:env(safe-area-inset-top)}
+  .hdr-main{display:flex;align-items:center;gap:10px 14px;padding:10px 16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:grid;place-items:center;
+    font-size:19px;box-shadow:0 4px 10px rgba(79,70,229,.3);flex-shrink:0}
+  .brand-text{min-width:0;line-height:1.15}
+  .brand-text strong{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em}
+  .brand-text small{display:block;font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap}
+  .brand-text small.dirty{color:#b45309} .brand-text small.saved{color:#047857}
+  .path-box{display:flex;align-items:center;flex:1 1 300px;min-width:0;max-width:560px;background:#f8fafc;border:1px solid var(--line);
+    border-radius:10px;overflow:hidden;transition:border-color .15s,box-shadow .15s,background .15s}
+  .path-box:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.15);background:#fff}
+  .path-box .ico{padding:0 2px 0 11px;font-size:14px}
+  .path-box input{flex:1;min-width:0;border:0;background:transparent;padding:9px 8px;font:13px var(--mono);color:var(--text);outline:none}
+  .path-box button{border:0;border-left:1px solid var(--line);background:#fff;padding:0 14px;align-self:stretch;font-weight:700;font-size:12.5px;
+    color:var(--brand);cursor:pointer;transition:background .15s}
+  .path-box button:hover{background:var(--brand-soft)}
+  .hdr-actions{display:flex;align-items:center;gap:4px;margin-left:auto}
+  .wc{font:12px var(--mono);color:var(--muted);margin-right:8px;white-space:nowrap}
+  .icon-btn{width:40px;height:40px;border-radius:10px;border:1px solid transparent;background:transparent;font-size:18px;cursor:pointer;
+    display:grid;place-items:center;transition:background .15s,border-color .15s,transform .1s}
+  .icon-btn:hover{background:#f1f5f9;border-color:var(--line)}
+  .icon-btn:active{transform:scale(.92)}
+  .icon-btn.danger:hover{background:#fef2f2;border-color:#fecaca}
+  .btn-primary{background:linear-gradient(180deg,#3b82f6,#2563eb);color:#fff;border:0;border-radius:10px;padding:0 20px;height:40px;
+    font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(37,99,235,.35);cursor:pointer;margin-left:6px;transition:filter .15s,transform .1s}
+  .btn-primary:hover{filter:brightness(1.07)} .btn-primary:active{transform:scale(.96)} .btn-primary:disabled{opacity:.65;cursor:wait}
+
+  .hdr-chips{display:flex;gap:8px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .hdr-chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 15px;border-radius:999px;border:1px solid;
+    font-size:13px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap;transition:transform .1s,box-shadow .15s,filter .15s}
+  .chip:hover{box-shadow:0 3px 10px rgba(15,23,42,.1);filter:brightness(.98)} .chip:active{transform:scale(.95)}
+  .chip-green{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .chip-blue{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .chip-amber{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .chip-slate{background:#f1f5f9;color:#334155;border-color:#cbd5e1}
+  .chip-indigo{background:#eef2ff;color:#4338ca;border-color:#c7d2fe}
+  .chip-teal{background:#f0fdfa;color:#0f766e;border-color:#99f6e4}
+  .chip-red{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .only-xs{display:none}
+
+  /* ============ AREA EDITOR ============ */
+  #editor-area{flex:1;display:flex;min-height:0;position:relative}
+  #editor-col{width:50%;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--line);min-width:0}
+  #markdown-input{flex:1;min-height:0;padding:22px 24px 40px;font:15px/1.75 var(--mono);color:#1e293b;background:#fff;border:0;transition:background .2s}
+  #markdown-input::placeholder{color:#94a3b8}
+  #markdown-input:focus{background:#fcfdff}
+  #markdown-input.drag-over{background-color:#eff6ff;outline:3px dashed #3b82f6;outline-offset:-8px}
+  #preview-output{width:50%;overflow-y:auto;padding:28px clamp(16px,3vw,44px) 5rem;background:#fff;-webkit-overflow-scrolling:touch;
+    font-size:16px;line-height:1.7;color:#1e293b;min-width:0}
+
+  /* ============ BARRA STRUMENTI ============ */
+  .toolbar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-bottom:1px solid var(--line);
+    overflow-x:auto;flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .toolbar::-webkit-scrollbar{display:none}
+  .tb-group{display:flex;align-items:center;gap:2px;padding:3px;background:#fff;border:1px solid var(--line);border-radius:11px;flex-shrink:0}
+  .fmt-btn{min-width:36px;height:36px;padding:0 9px;border-radius:8px;border:0;background:transparent;color:#334155;font-size:13px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;white-space:nowrap;transition:background .12s,color .12s,transform .08s}
+  .fmt-btn:hover{background:var(--brand-soft);color:var(--brand)}
+  .fmt-btn:active{transform:scale(.92)}
+  .fmt-btn.mono{font-family:var(--mono)} .fmt-btn.it{font-style:italic;font-family:Georgia,serif}
+  .fmt-btn.t-tip{background:#ecfdf5;color:#047857} .fmt-btn.t-info{background:#eff6ff;color:#1d4ed8}
+  .fmt-btn.t-warn{background:#fffbeb;color:#b45309} .fmt-btn.t-danger{background:#fef2f2;color:#b91c1c}
+  .fmt-btn.t-tip:hover,.fmt-btn.t-info:hover,.fmt-btn.t-warn:hover,.fmt-btn.t-danger:hover{filter:brightness(.95)}
+  select.fmt-btn{appearance:none;-webkit-appearance:none;padding:0 10px;background:#eef2ff;color:#4338ca;cursor:pointer;max-width:150px}
+  select.fmt-btn.sky{background:#f0f9ff;color:#0369a1}
+  .tb-sep{width:1px;height:20px;background:var(--line);flex-shrink:0}
+
+  /* ============ SCHEDE MOBILE (Scrivi / Anteprima) ============ */
+  .mobile-tabs{display:none}
+  @media (max-width:899px){
+    #editor-col,#preview-output{width:100%;border-right:0}
+    .view-edit #preview-output{display:none}
+    .view-preview #editor-col{display:none}
+    .mobile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+      background:#fff;border-top:1px solid var(--line);flex-shrink:0;box-shadow:0 -4px 14px rgba(15,23,42,.05)}
+    .mobile-tabs button{height:44px;border-radius:12px;border:1px solid var(--line);background:#f8fafc;color:#475569;font-weight:800;font-size:14px;cursor:pointer;transition:all .15s}
+    .mobile-tabs button.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.35)}
+    #markdown-input{padding:16px 16px 40px}
+    .wc{display:none}
+  }
+  @media (max-width:640px){
+    .hdr-main{padding:8px 12px;gap:8px}
+    .path-box{order:3;flex:1 1 100%;max-width:none}
+    .hdr-chips{padding:0 12px 8px}
+    .hdr-actions{gap:2px}
+    .icon-btn{width:38px;height:38px}
+    .btn-primary{padding:0 16px;margin-left:2px}
+    .fmt-lbl{display:none}
+    #preview-output{padding:20px 16px 5rem}
+  }
+  @media (max-width:420px){ .brand-text strong{display:none} .hdr-actions .hide-xs{display:none} .chip.only-xs{display:inline-flex} }
+  @media (pointer:coarse){
+    body.app input,body.app select,body.app textarea{font-size:16px !important}
+    .fmt-btn{min-width:42px;height:42px} .chip{height:40px}
+  }
+
+  /* Schermi bassi (telefono in orizzontale): barre più compatte per lasciare spazio al testo */
+  @media (max-height:520px){
+    .hdr-main{padding:4px 12px;gap:6px} .brand-logo{width:30px;height:30px;font-size:16px;border-radius:9px}
+    .icon-btn,.btn-primary{height:34px} .icon-btn{width:34px}
+    .path-box input{padding:6px 8px}
+    .hdr-chips{padding:0 12px 4px} body.app .chip{height:30px;padding:0 12px;font-size:12px}
+    .toolbar{padding:4px 8px} body.app .fmt-btn{min-width:34px;height:32px}
+    .mobile-tabs{padding:4px 8px calc(4px + env(safe-area-inset-bottom))} .mobile-tabs button{height:34px}
+    #markdown-input{padding:10px 14px 24px}
+  }
+
+  /* ============ FINESTRE (modal) ============ */
+  body.app .modal{background:rgba(15,23,42,.5);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+  body.app .modal > div{border-radius:20px;box-shadow:0 28px 70px rgba(15,23,42,.35)}
+  body.app .modal input[type=text],body.app .modal input[type=date],body.app .modal input[type=number],body.app .modal input[type=password],
+  body.app .modal select,body.app .modal textarea{border-radius:10px;border-color:var(--line)}
+  body.app .modal input:focus,body.app .modal select:focus,body.app .modal textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  body.app .modal button{touch-action:manipulation}
+  @media (max-width:640px){
+    body.app .modal{align-items:flex-end;padding:0}
+    body.app .modal > div{max-width:none;width:100%;border-radius:22px 22px 0 0;max-height:92vh;max-height:92dvh}
+    body.app #file-modal > div{height:92vh;height:92dvh}
+  }
+
+  /* ============ ANTEPRIMA (tipografia) ============ */
+  .prose{padding-bottom:5rem}
+  .prose h1{font-size:2em;font-weight:800;margin:.2em 0 .6em;padding-bottom:.3em;border-bottom:2px solid #e2e8f0;color:#1e3a8a;line-height:1.2}
+  .prose h2{font-size:1.5em;font-weight:800;margin:1.6em 0 .5em;color:#1e40af;line-height:1.25}
+  .prose h3{font-size:1.2em;font-weight:700;margin:1.3em 0 .5em;color:#2563eb}
+  .prose h4{font-size:1.05em;font-weight:700;margin:1.1em 0 .4em;color:#334155}
+  .prose ul{list-style:disc;padding-left:1.5em;margin-bottom:1em} .prose ol{list-style:decimal;padding-left:1.5em;margin-bottom:1em}
+  .prose li{margin:.25em 0}
+  .prose p{margin-bottom:1em}
+  .prose blockquote{border-left:4px solid #cbd5e1;padding:.2em 1em;color:#475569;font-style:italic;background:#f8fafc;border-radius:0 8px 8px 0;margin:1em 0}
+  .prose code{background:#f1f5f9;padding:.15em .4em;border-radius:5px;font-family:var(--mono);color:#be123c;font-size:.88em}
+  .prose pre{background:#0f172a;color:#e2e8f0;padding:1em 1.1em;border-radius:12px;overflow-x:auto;margin:1em 0;font-size:.88em;line-height:1.6}
+  .prose pre code{background:transparent;color:inherit;padding:0}
+  .prose img,.prose video{max-width:100%;border-radius:10px;margin:1em auto;box-shadow:0 4px 14px rgba(15,23,42,.12)}
+  .prose a{color:#2563eb;text-decoration:underline;text-underline-offset:2px}
+  .prose table{display:block;width:100%;overflow-x:auto;border-collapse:collapse;margin:1em 0;font-size:.93em}
+  .prose th,.prose td{border:1px solid #e2e8f0;padding:.5em .8em;text-align:left;vertical-align:top}
+  .prose th{background:#f1f5f9;font-weight:700}
+  .prose tr:nth-child(even) td{background:#f8fafc}
+  .custom-block{padding:1rem 1.1rem;border-radius:12px;margin:1.1rem 0;border-left:5px solid;background:#f9fafb}
+  .custom-block-title{font-weight:800;margin-bottom:.4rem;display:block}
+  .custom-block.tip{border-color:#10b981;background:#ecfdf5} .custom-block.warning{border-color:#f59e0b;background:#fffbeb}
+  .custom-block.danger{border-color:#ef4444;background:#fef2f2} .custom-block.info{border-color:#3b82f6;background:#eff6ff}
 </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="app">
 
 <div id="update-banner" class="hidden fixed top-0 inset-x-0 z-[60] bg-indigo-600 text-white text-sm font-bold text-center py-2 px-4 flex items-center justify-center gap-3 shadow-lg">
   <span>🔄 È disponibile una nuova versione dell'editor</span>
@@ -62,34 +195,35 @@ window.MathJax = {
   <button onclick="dismissUpdateBanner()" class="text-indigo-100 hover:text-white text-lg leading-none" title="Ignora per ora">&times;</button>
 </div>
 
-<header class="bg-white border-b p-3 shadow-sm flex flex-col gap-3 z-10 shrink-0">
-<div class="flex flex-wrap gap-2 items-center justify-between sm:justify-start">
-<div class="flex items-center gap-2">
-<a href="tools.html" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-200 hover:bg-indigo-100 transition no-underline">🛠️</a>
-<button onclick="startNewArticle()" class="bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-green-200 hover:bg-green-200" title="Svuota l'editor e comincia un articolo nuovo">🆕 Nuovo</button>
-<button onclick="openMetaModal()" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-blue-200 hover:bg-blue-200">📝 Dati</button>
-<button onclick="openModal('media-modal')" class="bg-amber-100 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-amber-200 hover:bg-amber-200">📷 Media</button>
-<button onclick="openFileManager()" class="bg-slate-100 text-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 hover:bg-slate-200">📂 File</button>
-<a href="offline-editor/markbud.html" target="_blank" class="bg-teal-50 text-teal-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-teal-200 hover:bg-teal-100 transition no-underline" title="Apri Editor Offline">💻 Offline</a>
+<header id="app-header">
+<div class="hdr-main">
+<div class="brand">
+<div class="brand-logo">✍️</div>
+<div class="brand-text"><strong>Proflama Editor</strong><small id="save-state">Nuovo documento</small></div>
 </div>
-<button id="mobile-toggle-btn" onclick="toggleMobileView()" class="md:hidden bg-purple-100 text-purple-800 px-3 py-1.5 rounded-lg text-xs font-bold ml-auto">👁️ Anteprima</button>
-<div class="hidden sm:flex flex-col flex-grow md:flex-grow-0 relative ml-2">
-<div class="flex items-center gap-2">
-<div class="flex">
-<input type="text" id="gh-path" placeholder="docs/blog/nome.md" class="border rounded-l px-2 py-1 text-sm w-32 lg:w-56 focus:border-blue-500 outline-none font-mono bg-gray-50">
-<button onclick="loadFromGitHub()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 text-xs font-bold border-y border-r border-gray-300 rounded-r">📂</button>
+<div class="path-box">
+<span class="ico">📄</span>
+<input type="text" id="gh-path" placeholder="docs/blog/nome.md" autocapitalize="off" autocomplete="off" spellcheck="false">
+<button onclick="loadFromGitHub()" title="Apri questo file da GitHub">Apri</button>
 </div>
-<button onclick="renderPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 text-xs font-bold rounded shadow ml-2 transition">🔄 Aggiorna</button>
-</div>
-</div>
-<div class="flex items-center gap-2 ml-auto sm:ml-2">
-<span id="word-count" class="text-xs text-gray-400 font-mono hidden lg:inline mr-2">0 parole</span>
-<button onclick="exportPDF()" class="p-2 text-slate-700 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition" title="Stampa / Salva come PDF">📄</button>
-<button onclick="checkImages()" class="p-2 text-blue-600 hover:bg-blue-50 rounded border border-transparent hover:border-blue-200 transition" title="Controlla immagini/link prima di pubblicare">🔍</button>
-<button onclick="deleteFile()" class="p-2 text-red-600 hover:bg-red-50 rounded border border-transparent hover:border-red-200 transition" title="Elimina file">🗑️</button>
-<button onclick="syncTextToGitHub()" id="save-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow text-sm font-bold transition">Salva</button>
+<div class="hdr-actions">
+<span id="word-count" class="wc">0 parole</span>
+<button class="icon-btn hide-xs" onclick="renderPreview()" title="Aggiorna anteprima">🔄</button>
+<button class="icon-btn" onclick="checkImages()" title="Controlla immagini/link prima di pubblicare">🔍</button>
+<button class="icon-btn" onclick="exportPDF()" title="Stampa / Salva come PDF">📄</button>
+<button class="icon-btn danger hide-xs" onclick="deleteFile()" title="Elimina file">🗑️</button>
+<button onclick="syncTextToGitHub()" id="save-btn" class="btn-primary">Salva</button>
 </div>
 </div>
+<nav class="hdr-chips" aria-label="Azioni">
+<button class="chip chip-green" onclick="startNewArticle()" title="Svuota l'editor e comincia un articolo nuovo">🆕 Nuovo</button>
+<button class="chip chip-blue" onclick="openMetaModal()">📝 Dati</button>
+<button class="chip chip-amber" onclick="openModal('media-modal')">📷 Media</button>
+<button class="chip chip-slate" onclick="openFileManager()">📂 File</button>
+<a class="chip chip-indigo" href="tools.html">🛠️ Strumenti</a>
+<a class="chip chip-teal" href="offline-editor/markbud.html" target="_blank" title="Apri Editor Offline">💻 Offline</a>
+<button class="chip chip-red only-xs" onclick="deleteFile()" title="Elimina file">🗑️ Elimina</button>
+</nav>
 </header>
 
 <div id="meta-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -155,37 +289,42 @@ window.MathJax = {
 </div>
 </div>
 
-<div id="editor-area">
-<div id="editor-col" class="w-full md:w-1/2 h-full flex flex-col border-r bg-white">
-<div class="flex items-center gap-1 p-2 bg-gray-50 border-b overflow-x-auto shrink-0">
-<button onclick="fmt('**', '**')" class="fmt-btn font-bold">B</button>
-<button onclick="fmt('*', '*')" class="fmt-btn italic">I</button>
-<div class="w-px h-4 bg-gray-300 mx-1"></div>
-<button onclick="fmt('# ', '')" class="fmt-btn">H1</button>
-<button onclick="fmt('## ', '')" class="fmt-btn">H2</button>
-<button onclick="fmt('### ', '')" class="fmt-btn">H3</button>
-<div class="w-px h-4 bg-gray-300 mx-1"></div>
-<button onclick="fmt('- ', '')" class="fmt-btn">List</button>
-<button onclick="fmt('1. ', '')" class="fmt-btn">1.</button>
-<div class="w-px h-4 bg-gray-300 mx-1"></div>
-<button onclick="fmt('[', '](url)')" class="fmt-btn">🔗</button>
-<button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
-<button onclick="insertMakeCode()" class="fmt-btn text-purple-600" title="Incorpora progetto MakeCode">🤖 MakeCode</button>
-<button onclick="insertMblockLink()" class="fmt-btn text-cyan-600" title="Inserisci link progetto mBlock">🚙 mBlock</button>
-<div class="w-px h-4 bg-gray-300 mx-1"></div>
-<button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
-<button onclick="fmt('```\\n', '\\n```')" class="fmt-btn font-mono" title="Block">{ }</button>
-<button onclick="fmt('```cpp\\n', '\\n```')" class="fmt-btn font-mono text-blue-600" title="C++">C++</button>
-<button onclick="fmt('```python\\n', '\\n```')" class="fmt-btn font-mono text-yellow-600" title="Python">Py</button>
-<div class="w-px h-4 bg-gray-300 mx-1"></div>
-<select onchange="insertTemplate(this.value); this.selectedIndex=0;" class="fmt-btn bg-indigo-50 text-indigo-700 border-indigo-100 w-auto px-2 font-bold" title="Inserisci Modello">
+<div id="editor-area" class="view-edit">
+<div id="editor-col">
+<div class="toolbar" role="toolbar" aria-label="Formattazione">
+<div class="tb-group">
+<button onclick="fmt('**', '**')" class="fmt-btn" title="Grassetto (Ctrl+B)"><b>B</b></button>
+<button onclick="fmt('*', '*')" class="fmt-btn it" title="Corsivo (Ctrl+I)">I</button>
+<button onclick="fmt('# ', '')" class="fmt-btn" title="Titolo 1">H1</button>
+<button onclick="fmt('## ', '')" class="fmt-btn" title="Titolo 2">H2</button>
+<button onclick="fmt('### ', '')" class="fmt-btn" title="Titolo 3">H3</button>
+</div>
+<div class="tb-group">
+<button onclick="fmt('- ', '')" class="fmt-btn" title="Elenco puntato">• <span class="fmt-lbl">Elenco</span></button>
+<button onclick="fmt('1. ', '')" class="fmt-btn" title="Elenco numerato">1.</button>
+<button onclick="fmt('[', '](url)')" class="fmt-btn" title="Link">🔗</button>
+</div>
+<div class="tb-group">
+<button onclick="openImageModal()" class="fmt-btn" title="Inserisci immagine con percorso corretto">🖼️ <span class="fmt-lbl">Immagine</span></button>
+<button onclick="insertYouTube()" class="fmt-btn" title="Video YouTube">▶️ <span class="fmt-lbl">YouTube</span></button>
+<button onclick="insertMakeCode()" class="fmt-btn" title="Incorpora progetto MakeCode">🤖 <span class="fmt-lbl">MakeCode</span></button>
+<button onclick="insertMblockLink()" class="fmt-btn" title="Inserisci link progetto mBlock">🚙 <span class="fmt-lbl">mBlock</span></button>
+</div>
+<div class="tb-group">
+<button onclick="fmt('`', '`')" class="fmt-btn mono" title="Codice in linea">`</button>
+<button onclick="fmt('```\n', '\n```')" class="fmt-btn mono" title="Blocco di codice">{ }</button>
+<button onclick="fmt('```cpp\n', '\n```')" class="fmt-btn mono" title="Blocco C++">C++</button>
+<button onclick="fmt('```python\n', '\n```')" class="fmt-btn mono" title="Blocco Python">Py</button>
+</div>
+<div class="tb-group">
+<select onchange="insertTemplate(this.value); this.selectedIndex=0;" class="fmt-btn" title="Inserisci Modello">
 <option value="">📋 Modello...</option>
 <option value="microbit">🤖 Microbit / MakeCode</option>
 <option value="arduino">🔌 Arduino</option>
 <option value="scratch">🐱 Scratch</option>
 <option value="mbot">🚙 Mbot / mBlock</option>
 </select>
-<select onchange="insertTable(this.value); this.selectedIndex=0;" class="fmt-btn bg-sky-50 text-sky-700 border-sky-100 w-auto px-2 font-bold" title="Inserisci tabella">
+<select onchange="insertTable(this.value); this.selectedIndex=0;" class="fmt-btn sky" title="Inserisci tabella">
 <option value="">📊 Tabella...</option>
 <option value="microbit">Blocchi micro:bit (4 col.)</option>
 <option value="scratch">Blocchi Scratch (3 col.)</option>
@@ -193,15 +332,17 @@ window.MathJax = {
 <option value="pin">Collegamento pin</option>
 <option value="libera">Libera (3 col.)</option>
 </select>
-<button onclick="openImageModal()" class="fmt-btn text-amber-700 bg-amber-50 hover:bg-amber-100" title="Inserisci immagine con percorso corretto">🖼️</button>
-<button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
-<button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
-<button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
-<button onclick="fmt('::: danger 🔥 PERICOLO\\n', '\\n:::\\n')" class="fmt-btn text-red-600 bg-red-50 hover:bg-red-100">🔥</button>
 </div>
-<textarea id="markdown-input" class="flex-1 p-6 font-mono text-sm leading-relaxed text-gray-800 resize-none outline-none focus:bg-gray-50" placeholder="Caricamento librerie..." lang="it" spellcheck="true"></textarea>
+<div class="tb-group">
+<button onclick="fmt('::: tip 💡 CONSIGLIO\n', '\n:::\n')" class="fmt-btn t-tip" title="Riquadro consiglio">💡</button>
+<button onclick="fmt('::: info ℹ️ INFO\n', '\n:::\n')" class="fmt-btn t-info" title="Riquadro info">ℹ️</button>
+<button onclick="fmt('::: warning ⚠️ ATTENZIONE\n', '\n:::\n')" class="fmt-btn t-warn" title="Riquadro attenzione">⚠️</button>
+<button onclick="fmt('::: danger 🔥 PERICOLO\n', '\n:::\n')" class="fmt-btn t-danger" title="Riquadro pericolo">🔥</button>
 </div>
-<div id="preview-output" class="hidden md:block w-full md:w-1/2 h-full p-6 overflow-y-auto bg-gray-50 prose max-w-none"></div>
+</div>
+<textarea id="markdown-input" placeholder="Caricamento librerie..." lang="it" spellcheck="true"></textarea>
+</div>
+<div id="preview-output" class="prose"></div>
 <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 z-20 flex items-center justify-center backdrop-blur-sm">
 <div class="bg-white px-6 py-4 rounded-lg shadow-xl border flex flex-col items-center gap-3">
 <svg class="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -210,7 +351,12 @@ window.MathJax = {
 </div>
 </div>
 
-<div id="status-msg" class="fixed bottom-5 right-5 transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
+<div class="mobile-tabs" role="tablist">
+<button id="tab-edit" class="active" onclick="setMobileView('edit')" role="tab">✍️ Scrivi</button>
+<button id="tab-preview" onclick="setMobileView('preview')" role="tab">👁️ Anteprima</button>
+</div>
+
+<div id="status-msg" class="fixed bottom-24 left-3 right-3 md:left-auto md:right-5 md:bottom-5 md:max-w-md transform transition-all duration-300 translate-y-20 opacity-0 z-50 pointer-events-none">
 <div class="bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium"><span id="status-icon"></span><span id="status-text">Messaggio</span></div>
 </div>
 
@@ -249,6 +395,7 @@ function startNewArticle() {
   input.value = '';
   setFilePath('');
   loadedPath = '';
+  setSaveState('new');
   try { localStorage.setItem('my_gh-path', ''); } catch (e) {}
   document.getElementById('meta-title').value = '';
   document.getElementById('meta-desc').value = '';
@@ -292,7 +439,8 @@ input.addEventListener('input', () => {
   const words = text.trim().split(/\s+/).length;
   const time = Math.ceil(words / 200);
   document.getElementById('word-count').innerText = `${words} parole (~${time} min)`;
-  renderPreview();
+  setSaveState('dirty');
+  renderPreviewSoon();
 });
 
 document.addEventListener('keydown', (e) => {
@@ -482,9 +630,26 @@ function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 function b64EncodeUnicode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1))); }
 function b64DecodeUnicode(str) { return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
 function getCreds() { return { token: document.getElementById('gh-token').value.trim(), owner: document.getElementById('gh-owner').value.trim(), repo: document.getElementById('gh-repo').value.trim() }; }
-function showStatus(msg, type='success') { const el = document.getElementById('status-msg'); el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded shadow flex gap-3":"bg-emerald-600 text-white px-4 py-3 rounded shadow flex gap-3"; document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅'; document.getElementById('status-text').innerText = msg; el.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000); }
+function showStatus(msg, type='success') { const el = document.getElementById('status-msg'); el.firstElementChild.className = type==='error'?"bg-red-600 text-white px-4 py-3 rounded-xl shadow-xl flex gap-3 text-sm font-semibold":"bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl flex gap-3 text-sm font-semibold"; document.getElementById('status-icon').innerText = type==='error'?'⚠️':'✅'; document.getElementById('status-text').innerText = msg; el.classList.remove('translate-y-20', 'opacity-0'); setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 4000); }
 function loading(s, m="") { const el=document.getElementById('loading-overlay'); if(s){document.getElementById('loading-msg').innerText=m; el.classList.remove('hidden');}else{el.classList.add('hidden');} }
-function toggleMobileView() { const btn = document.getElementById('mobile-toggle-btn'); if(editorCol.classList.contains('hidden')) { editorCol.classList.remove('hidden'); preview.classList.add('hidden'); btn.innerText="👁️ Anteprima"; } else { renderPreview(); editorCol.classList.add('hidden'); preview.classList.remove('hidden'); btn.innerText="✏️ Editor"; } }
+function setMobileView(mode) {
+  const area = document.getElementById('editor-area');
+  area.classList.toggle('view-preview', mode === 'preview');
+  area.classList.toggle('view-edit', mode !== 'preview');
+  document.getElementById('tab-edit').classList.toggle('active', mode !== 'preview');
+  document.getElementById('tab-preview').classList.toggle('active', mode === 'preview');
+  if (mode === 'preview') { renderPreview(); preview.scrollTop = 0; } else { input.focus({ preventScroll: true }); }
+}
+function toggleMobileView() { setMobileView(document.getElementById('editor-area').classList.contains('view-preview') ? 'edit' : 'preview'); }
+
+// Indicatore di stato accanto al logo: nuovo / modifiche non salvate / salvato
+function setSaveState(state) {
+  const el = document.getElementById('save-state'); if (!el) return;
+  el.className = state === 'dirty' ? 'dirty' : (state === 'saved' ? 'saved' : '');
+  el.textContent = state === 'dirty' ? '● Modifiche non salvate' : (state === 'saved' ? '✓ Salvato' : 'Nuovo documento');
+}
+let previewTimer = null;
+function renderPreviewSoon() { clearTimeout(previewTimer); previewTimer = setTimeout(renderPreview, 150); }
 
 // --- Percorso repo <-> percorso pubblico -------------------------------------------------
 // Il sito (VitePress) pubblica tutto quello che sta in docs/public/ alla RADICE del sito.
@@ -942,6 +1107,7 @@ async function loadFromGitHub() {
     input.value = b64DecodeUnicode(data.content);
     loadedPath = p;
     renderPreview();
+    setSaveState('saved');
     showStatus("Caricato!");
   } catch (e) {
     showStatus(e.message, 'error');
@@ -1005,6 +1171,7 @@ async function syncTextToGitHub() {
     }
     localStorage.removeItem('autosave_draft_' + p);
     loadedPath = p;
+    setSaveState('saved');
     showStatus("Salvato!");
   } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; }
 }
