@@ -1,4 +1,4 @@
-const CACHE_NAME = 'md-editor-v8'; // Cambia questo nome ad ogni release per forzare l'aggiornamento della PWA
+const CACHE_NAME = 'md-editor-v8-fix'; // Cambia questo nome ad ogni release per forzare l'aggiornamento della PWA
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
