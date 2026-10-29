@@ -237,7 +237,7 @@ window.MathJax = {
 <button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option><option value="Officina-Robotica">Officina-Robotica</option></select></div>
 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
 </div>
 <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
@@ -378,7 +378,38 @@ function setFilePath(path) {
 }
 
 // Apre il modal "Dati" assicurandosi che il campo "Nome file" mostri il percorso attuale
+// Legge il frontmatter già presente nell'articolo e riempie il modulo "Dati" con i valori esistenti:
+// così riaprendo "Dati" su un articolo già scritto (es. categoria Officina-Robotica) non si cambia nulla per sbaglio.
+function prefillMetaFromText() {
+  const m = input.value.match(/^\s*---\r?\n([\s\S]*?)\r?\n---/);
+  if (!m) return false;
+  const fm = {};
+  m[1].split(/\r?\n/).forEach(line => {
+    const k = line.match(/^([A-Za-z_]+):\s*(.*)$/); if (!k) return;
+    let v = k[2].trim();
+    if (/^'.*'$/.test(v)) v = v.slice(1, -1).replace(/''/g, "'");
+    else if (/^".*"$/.test(v)) v = v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    fm[k[1]] = v;
+  });
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+  set('meta-title', fm.title); set('meta-desc', fm.description); set('meta-image', fm.image);
+  set('meta-duration', fm.duration !== undefined ? fm.duration : '');
+  if (fm.draft) set('meta-draft', fm.draft === 'true' ? 'true' : 'false');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fm.date || '')) set('meta-date', fm.date);
+  if (fm.category) {
+    const sel = document.getElementById('meta-cat');
+    if (![...sel.options].some(o => o.value === fm.category)) sel.add(new Option(fm.category, fm.category)); // categoria nuova: non la perdiamo
+    sel.value = fm.category;
+  }
+  if (fm.class_target !== undefined) {
+    const toks = fm.class_target.split(',').map(t => t.trim()).filter(Boolean);
+    document.querySelectorAll('input[name="target-opt"]').forEach(c => { c.checked = toks.includes(c.value); });
+  }
+  return true;
+}
+
 function openMetaModal() {
+  prefillMetaFromText();
   const mfp = document.getElementById('meta-filepath');
   if (mfp) mfp.value = document.getElementById('gh-path').value;
   const hint = document.getElementById('meta-path-hint');
