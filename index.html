@@ -96,12 +96,12 @@ window.MathJax = {
 <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col">
 <div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
 <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
-<div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" autocomplete="off" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Nome file da salvare</label><input type="text" id="meta-filepath" placeholder="docs/blog/nome-articolo.md" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"><p class="text-[10px] text-gray-400 mt-1">Si aggiorna da solo mentre scrivi il titolo. Puoi modificarlo a mano, oppure usa il pulsante qui sotto per farti suggerire il numero giusto.</p></div>
 <button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option><option>Officina-Robotica</option></select></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Categoria</label><select id="meta-cat" class="w-full border rounded px-3 py-2 bg-white"><option value="Microbit">Microbit</option><option value="Arduino">Arduino</option><option value="Mbot">Mbot</option><option value="Scratch">Scratch</option><option value="Elettronica">Elettronica</option></select></div>
 <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Target Classe</label><div class="flex flex-wrap gap-2 bg-white border rounded px-3 py-2"><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="1" class="rounded text-blue-600"> 1</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="2" class="rounded text-blue-600"> 2</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="3" class="rounded text-blue-600"> 3</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Elementari" class="rounded text-blue-600"> Elem</label><label class="flex items-center gap-1 text-sm"><input type="checkbox" name="target-opt" value="Tutti" class="rounded text-blue-600"> Tutti</label></div></div>
 </div>
 <div class="grid grid-cols-2 gap-4"><div><label class="block text-xs font-bold text-gray-500 uppercase">Data</label><input type="date" id="meta-date" class="w-full border rounded px-3 py-2"></div><div><label class="block text-xs font-bold text-gray-500 uppercase">Bozza</label><select id="meta-draft" class="w-full border rounded px-3 py-2 bg-white"><option value="false">Pubblico</option><option value="true">Bozza</option></select></div></div>
@@ -223,6 +223,7 @@ function startNewArticle() {
   if (hasContent && !confirm("Il contenuto attuale nell'editor non è ancora salvato. Vuoi scartarlo e iniziare un nuovo articolo?")) return;
   input.value = '';
   setFilePath('');
+  try { localStorage.setItem('my_gh-path', ''); } catch (e) {}
   document.getElementById('meta-title').value = '';
   document.getElementById('meta-desc').value = '';
   document.getElementById('meta-image').value = '/img/default.jpg';
@@ -231,8 +232,8 @@ function startNewArticle() {
   document.querySelectorAll('input[name="target-opt"]').forEach(c => c.checked = false);
   document.getElementById('meta-date').valueAsDate = new Date();
   renderPreview();
-  skipOverwriteConfirm = true; // il prossimo click su "Inserisci" nel modal non deve chiedere conferma
   openMetaModal();
+  setTimeout(() => document.getElementById('meta-title').focus(), 50);
 }
 
 // --- 1. INIT & EVENTS ---
@@ -476,15 +477,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const mfp = document.getElementById('meta-filepath');
   if (mfp) mfp.addEventListener('input', (e) => { document.getElementById('gh-path').value = e.target.value; });
 });
+// Rende sicuro il titolo per il frontmatter YAML: se contiene ":" "#" apici ecc. lo mette tra virgolette,
+// altrimenti VitePress non riesce a leggere l'intestazione e il titolo "sparisce" dal sito.
+function yamlTitle(t) {
+  if (/[:#'"\[\]{}&*!|>%@`,]|^[-?\s]|\s$/.test(t)) return '"' + t.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  return t;
+}
 function applyMetadata() {
-  const title = document.getElementById('meta-title').value;
+  const titleEl = document.getElementById('meta-title');
+  const title = titleEl.value.trim();
+  if (!title) { showStatus('Scrivi prima il titolo dell\'articolo', 'error'); titleEl.focus(); return; }
   const safeDesc = document.getElementById('meta-desc').value.replace(/'/g, "''");
   const checked = Array.from(document.querySelectorAll('input[name="target-opt"]:checked')).map(c=>c.value);
   const target = checked.length > 0 ? checked.join(', ') : 'Tutti';
   const img = document.getElementById('meta-image').value;
   const duration = document.getElementById('meta-duration').value;
-  const t = `---
-title: ${title}
+  const fm = `---
+title: ${yamlTitle(title)}
 description: '${safeDesc}'
 draft: ${document.getElementById('meta-draft').value}
 date: ${document.getElementById('meta-date').value}
@@ -492,12 +501,19 @@ category: ${document.getElementById('meta-cat').value}
 class_target: "${target}"${duration ? `\nduration: ${duration}` : ''}
 image: ${img}
 ---
-
-# ${title}
 `;
-  if (input.value.length > 10 && !skipOverwriteConfirm && !confirm("Il testo attuale nell'editor verrà sostituito con questo nuovo frontmatter. Continuare?")) return;
+  // Non si perde più il testo già scritto: se c'è già un frontmatter si sostituisce solo quello
+  // (e il primo titolo "# ..."), altrimenti il frontmatter viene aggiunto in cima.
+  const cur = input.value;
+  const m = cur.match(/^\s*---\r?\n[\s\S]*?\r?\n---[ \t]*\r?\n?/);
+  let body = m ? cur.slice(m[0].length) : cur;
+  body = body.replace(/^\s*\n/, '');
+  if (/^# .*/.test(body)) body = body.replace(/^# .*/, '# ' + title);
+  else body = '# ' + title + '\n\n' + body;
+  input.value = fm + '\n' + body;
   skipOverwriteConfirm = false;
-  input.value = t; renderPreview(); closeModal('meta-modal');
+  input.dispatchEvent(new Event('input'));
+  renderPreview(); closeModal('meta-modal');
   showStatus(`Pronto per essere salvato come: ${document.getElementById('gh-path').value || '(nessun percorso impostato)'}`);
 }
 
