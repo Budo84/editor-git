@@ -97,7 +97,7 @@ window.MathJax = {
 <div class="bg-blue-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-blue-800">📝 Dati Articolo</h3><button onclick="closeModal('meta-modal')" class="text-blue-400 hover:text-blue-600 text-2xl leading-none">&times;</button></div>
 <div class="p-6 space-y-4 overflow-y-auto max-h-[80vh]">
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Titolo</label><input type="text" id="meta-title" autocomplete="off" class="w-full border rounded px-3 py-2 font-bold" oninput="autoUpdateFilename()"></div>
-<div><label class="block text-xs font-bold text-gray-500 uppercase">Nome file da salvare</label><input type="text" id="meta-filepath" placeholder="docs/blog/nome-articolo.md" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"><p class="text-[10px] text-gray-400 mt-1">Si aggiorna da solo mentre scrivi il titolo. Puoi modificarlo a mano, oppure usa il pulsante qui sotto per farti suggerire il numero giusto.</p></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Nome file da salvare</label><input type="text" id="meta-filepath" placeholder="docs/blog/nome-articolo.md" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"><p id="meta-path-hint" class="text-[10px] text-gray-400 mt-1">Si aggiorna da solo mentre scrivi il titolo. Puoi modificarlo a mano, oppure usa il pulsante qui sotto per farti suggerire il numero giusto.</p></div>
 <button onclick="suggestNextNumber()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center justify-center gap-2">🔢 Suggerisci numero lezione (in base alla Categoria)</button>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Descrizione</label><textarea id="meta-desc" rows="2" class="w-full border rounded px-3 py-2"></textarea></div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -108,6 +108,18 @@ window.MathJax = {
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Durata Lezione (minuti)</label><input type="number" id="meta-duration" placeholder="es. 60" class="w-full border rounded px-3 py-2"></div>
 <div><label class="block text-xs font-bold text-gray-500 uppercase">Copertina</label><input type="text" id="meta-image" value="/img/default.jpg" class="w-full border rounded px-3 py-2 font-mono text-sm bg-gray-50"></div>
 <button onclick="applyMetadata()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">⬇️ Inserisci</button>
+</div>
+</div>
+</div>
+
+<div id="img-modal" class="modal hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+<div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+<div class="bg-amber-50 p-4 border-b flex justify-between items-center"><h3 class="font-bold text-lg text-amber-800">🖼️ Inserisci immagine</h3><button onclick="closeModal('img-modal')" class="text-amber-400 hover:text-amber-600 text-2xl leading-none">&times;</button></div>
+<div class="p-6 space-y-4">
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Percorso e nome file</label><input type="text" id="imgm-path" data-auto="1" class="w-full border rounded px-3 py-2 font-mono text-sm" placeholder="/img/scratch/nome.png" onkeydown="if(event.key==='Enter')applyImageModal()"><p class="text-[10px] text-gray-400 mt-1">Lo slash iniziale e il percorso giusto vengono messi in automatico (mai "docs/public"). Puoi inserire anche un segnaposto e caricare il file dopo con 📷 Media, con lo stesso nome.</p></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Testo alternativo (descrizione)</label><input type="text" id="imgm-alt" class="w-full border rounded px-3 py-2" onkeydown="if(event.key==='Enter')applyImageModal()"></div>
+<div><label class="block text-xs font-bold text-gray-500 uppercase">Larghezza</label><select id="imgm-width" class="w-full border rounded px-3 py-2 bg-white"><option>200</option><option>250</option><option selected>300</option><option>400</option><option>500</option><option>700</option></select></div>
+<button onclick="applyImageModal()" class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg hover:bg-amber-600 transition">⬇️ Inserisci</button>
 </div>
 </div>
 </div>
@@ -160,7 +172,6 @@ window.MathJax = {
 <button onclick="insertYouTube()" class="fmt-btn text-red-600">▶️ YT</button>
 <button onclick="insertMakeCode()" class="fmt-btn text-purple-600" title="Incorpora progetto MakeCode">🤖 MakeCode</button>
 <button onclick="insertMblockLink()" class="fmt-btn text-cyan-600" title="Inserisci link progetto mBlock">🚙 mBlock</button>
-<button onclick="insertTable()" class="fmt-btn">📊 Tab</button>
 <div class="w-px h-4 bg-gray-300 mx-1"></div>
 <button onclick="fmt('`', '`')" class="fmt-btn font-mono" title="Inline">`</button>
 <button onclick="fmt('```\\n', '\\n```')" class="fmt-btn font-mono" title="Block">{ }</button>
@@ -174,6 +185,15 @@ window.MathJax = {
 <option value="scratch">🐱 Scratch</option>
 <option value="mbot">🚙 Mbot / mBlock</option>
 </select>
+<select onchange="insertTable(this.value); this.selectedIndex=0;" class="fmt-btn bg-sky-50 text-sky-700 border-sky-100 w-auto px-2 font-bold" title="Inserisci tabella">
+<option value="">📊 Tabella...</option>
+<option value="microbit">Blocchi micro:bit (4 col.)</option>
+<option value="scratch">Blocchi Scratch (3 col.)</option>
+<option value="componenti">Componenti</option>
+<option value="pin">Collegamento pin</option>
+<option value="libera">Libera (3 col.)</option>
+</select>
+<button onclick="openImageModal()" class="fmt-btn text-amber-700 bg-amber-50 hover:bg-amber-100" title="Inserisci immagine con percorso corretto">🖼️</button>
 <button onclick="fmt('::: tip 💡 CONSIGLIO\\n', '\\n:::\\n')" class="fmt-btn text-emerald-600 bg-emerald-50 hover:bg-emerald-100">💡</button>
 <button onclick="fmt('::: info ℹ️ INFO\\n', '\\n:::\\n')" class="fmt-btn text-blue-600 bg-blue-50 hover:bg-blue-100">ℹ️</button>
 <button onclick="fmt('::: warning ⚠️ ATTENZIONE\\n', '\\n:::\\n')" class="fmt-btn text-amber-600 bg-amber-50 hover:bg-amber-100">⚠️</button>
@@ -198,6 +218,7 @@ window.MathJax = {
 const input = document.getElementById('markdown-input');
 const preview = document.getElementById('preview-output');
 const editorCol = document.getElementById('editor-col');
+let loadedPath = ''; // percorso di un articolo ESISTENTE (caricato da GitHub o già salvato): il nome file non va ricalcolato dal titolo
 let skipOverwriteConfirm = false; // usato da "Nuovo Articolo" per non chiedere conferma su un editor già svuotato apposta
 
 // Scrive il percorso del file sia nel campo dell'header sia in quello dentro il modal "Dati",
@@ -212,6 +233,10 @@ function setFilePath(path) {
 function openMetaModal() {
   const mfp = document.getElementById('meta-filepath');
   if (mfp) mfp.value = document.getElementById('gh-path').value;
+  const hint = document.getElementById('meta-path-hint');
+  if (hint) hint.textContent = loadedPath
+    ? '🔒 Articolo esistente: il nome file NON cambia se modifichi il titolo (per non creare una copia). Puoi cambiarlo a mano qui sotto.'
+    : 'Si aggiorna da solo mentre scrivi il titolo. Puoi modificarlo a mano, oppure usa il pulsante qui sotto per farti suggerire il numero giusto.';
   openModal('meta-modal');
 }
 
@@ -223,6 +248,7 @@ function startNewArticle() {
   if (hasContent && !confirm("Il contenuto attuale nell'editor non è ancora salvato. Vuoi scartarlo e iniziare un nuovo articolo?")) return;
   input.value = '';
   setFilePath('');
+  loadedPath = '';
   try { localStorage.setItem('my_gh-path', ''); } catch (e) {}
   document.getElementById('meta-title').value = '';
   document.getElementById('meta-desc').value = '';
@@ -243,6 +269,7 @@ window.addEventListener('load', () => {
     if (saved) document.getElementById(id).value = saved;
     document.getElementById(id).addEventListener('input', (e) => localStorage.setItem('my_' + id, e.target.value));
   });
+  loadedPath = document.getElementById('gh-path').value.trim();
   document.getElementById('meta-date').valueAsDate = new Date();
   const curPath = document.getElementById('gh-path').value.trim() || '_untitled';
   const savedDraft = localStorage.getItem('autosave_draft_' + curPath) || localStorage.getItem('autosave_draft');
@@ -364,14 +391,69 @@ function fmt(s, e) {
   input.selectionStart = input.selectionEnd = start + r.length;
   input.focus();
   renderPreview();
+  input.dispatchEvent(new Event('input'));
 }
+
+// --- INSERISCI TABELLA ---
+const TABLE_TYPES = {
+  microbit: ['Sezione', 'Blocco', 'Istruzione e Funzione', 'Dove Inserire'],
+  scratch:  ['Categoria Blocchi', 'Blocco', 'Istruzione e Funzione'],
+  componenti: ['Componente', 'Codice', 'Funzione'],
+  pin: ['Pin modulo', 'Pin shield / Arduino'],
+  libera: ['Colonna 1', 'Colonna 2', 'Colonna 3']
+};
+function insertTable(type) {
+  const cols = TABLE_TYPES[type]; if (!cols) return;
+  const ans = prompt('Quante righe vuote vuoi?', '4'); if (ans === null) return;
+  const rows = Math.min(50, Math.max(1, parseInt(ans, 10) || 4));
+  const line = c => '| ' + c.join(' | ') + ' |';
+  const out = [line(cols), '|' + cols.map(() => '---').join('|') + '|']
+    .concat(Array.from({ length: rows }, () => line(cols.map(() => '  ')))).join('\n');
+  const before = input.value.substring(0, input.selectionStart);
+  fmt((before === '' || before.endsWith('\n\n') ? '' : (before.endsWith('\n') ? '\n' : '\n\n')) + out + '\n\n', '');
+}
+
+// --- INSERISCI IMMAGINE (segnaposto o già caricata) ---
+// Costruisce sempre il percorso giusto per VitePress: "/img/..." con lo slash iniziale, mai "docs/public".
+function toPublicUrl(p) {
+  let c = p.trim().replace(/\\/g, '/').replace(/^\.?\/+/, '').replace(/^docs\/public\//, '');
+  return '/' + c;
+}
+function openImageModal() {
+  const base = toPublicUrl((document.getElementById('gh-img-base').value || 'docs/public/img/').replace(/\/$/, '')) + '/';
+  const f = document.getElementById('imgm-path');
+  if (!f.value || f.dataset.auto === '1') { f.value = base; f.dataset.auto = '1'; }
+  const sel = input.value.substring(input.selectionStart, input.selectionEnd).trim();
+  if (sel && !document.getElementById('imgm-alt').value) document.getElementById('imgm-alt').value = sel;
+  openModal('img-modal');
+  setTimeout(() => { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }, 50);
+}
+function applyImageModal() {
+  const f = document.getElementById('imgm-path');
+  let path = f.value.trim();
+  if (!path || path.endsWith('/')) { showStatus('Scrivi il nome del file, es. mio-schema.png', 'error'); f.focus(); return; }
+  let url = toPublicUrl(path);
+  if (!/\.(png|jpe?g|webp|gif|svg)$/i.test(url)) url += '.png';
+  const alt = document.getElementById('imgm-alt').value.trim().replace(/"/g, "'") || 'immagine';
+  const width = document.getElementById('imgm-width').value;
+  const tag = `\n<center>\n\t<img src="${url}" alt="${alt}" width="${width}"/>\n</center>\n\n`;
+  closeModal('img-modal');
+  fmt(tag, '');
+  document.getElementById('imgm-alt').value = '';
+  f.value = ''; f.dataset.auto = '1';
+  showStatus(`Inserita: ${url}`);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const f = document.getElementById('imgm-path');
+  if (f) f.addEventListener('input', () => { f.dataset.auto = '0'; });
+});
 
 function insertTemplate(type) {
   const templates = {
     microbit: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Cosa facciamo se...?* -> ...\n\n## Fase 3: Scrittura del Codice 💻\n\nApriamo la categoria **...** nella Toolbox.\n\n| Sezione | Blocco | Istruzione e Funzione | Dove Inserire |\n|---|---|---|---|\n| | | | |\n\n`,
-    arduino: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Montaggio (Tinkercad) 🔌\n\n#### Componenti\n* 1x **Arduino Uno**\n* ...\n\n#### Cablaggio\n1. Collega...\n\n<center>\n\t<img src="img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n## Fase 3: Scrittura del Codice 💻\n\n\`\`\`cpp\nvoid setup() {\n\n}\n\nvoid loop() {\n\n}\n\`\`\`\n\n`,
-    scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`,
-    mbot: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Collegamento e Sensori 🔌\n\n- Colleghiamo mBot al computer via **USB** / **Bluetooth**.\n- Sensori/attuatori usati in questa lezione: ...\n\n## Fase 3: Progettazione dello Pseudocodice 📝\n\n- *Se il sensore a ultrasuoni rileva un ostacolo...* -> ...\n\n## Fase 4: Costruzione degli Script su mBlock 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="img/robotica/screenshot-mblock.png" alt="script mBlock" width="400"/>\n</center>\n\n::: info ℹ️ PROGETTO MBLOCK\nSe hai condiviso il progetto su [mBlock Community](https://ide.mblock.cc), incolla qui il link diretto.\n:::\n\n`
+    arduino: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Montaggio (Tinkercad) 🔌\n\n#### Componenti\n* 1x **Arduino Uno**\n* ...\n\n#### Cablaggio\n1. Collega...\n\n<center>\n\t<img src="/img/robotica/demo.png" alt="circuito" width="300"/>\n</center>\n\n## Fase 3: Scrittura del Codice 💻\n\n\`\`\`cpp\nvoid setup() {\n\n}\n\nvoid loop() {\n\n}\n\`\`\`\n\n`,
+    scratch: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n...\n\n## Fase 2: Progettazione dello Pseudocodice 📝\n\n- *Quando si preme la bandiera verde...* -> ...\n\n## Fase 3: Costruzione degli Script 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="/img/robotica/screenshot-scratch.png" alt="script scratch" width="400"/>\n</center>\n\n`,
+    mbot: `\n**Obiettivo:** ...\n\n**Concetti Chiave:**\n- ...\n- ...\n\n## Fase 1: Teoria 🧠\n\n- **Domanda alla classe:** *"..."*\n\n## Fase 2: Collegamento e Sensori 🔌\n\n- Colleghiamo mBot al computer via **USB** / **Bluetooth**.\n- Sensori/attuatori usati in questa lezione: ...\n\n## Fase 3: Progettazione dello Pseudocodice 📝\n\n- *Se il sensore a ultrasuoni rileva un ostacolo...* -> ...\n\n## Fase 4: Costruzione degli Script su mBlock 💻\n\n| Categoria Blocchi | Blocco | Istruzione e Funzione |\n|---|---|---|\n| | | |\n\n<center>\n\t<img src="/img/robotica/screenshot-mblock.png" alt="script mBlock" width="400"/>\n</center>\n\n::: info ℹ️ PROGETTO MBLOCK\nSe hai condiviso il progetto su [mBlock Community](https://ide.mblock.cc), incolla qui il link diretto.\n:::\n\n`
   };
   fmt(templates[type] || templates.microbit, '');
 }
@@ -393,8 +475,6 @@ function insertMblockLink() {
   // quindi qui inseriamo un link/pulsante invece di un iframe che potrebbe non caricarsi.
   fmt(`\n<div style="text-align:center;margin:1em 0;"><a href="${u.trim()}" target="_blank" rel="noopener" style="display:inline-block;background:#0891b2;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">🚙 Apri il progetto mBlock</a></div>\n`, '');
 }
-
-function insertTable() { fmt(`\n| A | B |\n|---|---|\n| 1 | 2 |\n`, ''); }
 
 // --- UTILS ---
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -471,7 +551,7 @@ async function suggestNextNumber() {
 }
 
 // --- METADATA ---
-function autoUpdateFilename() { const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); setFilePath(`docs/blog/${slug}.md`); }
+function autoUpdateFilename() { if (loadedPath) return; const t = document.getElementById('meta-title').value; const slug = t.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'); setFilePath(`docs/blog/${slug}.md`); }
 // Il campo "Nome file" dentro il modal è modificabile a mano: se lo cambi, si aggiorna anche l'header
 document.addEventListener('DOMContentLoaded', () => {
   const mfp = document.getElementById('meta-filepath');
@@ -860,6 +940,7 @@ async function loadFromGitHub() {
     if (Array.isArray(data)) throw new Error(`"${p}" è una cartella, non un file .md`);
     if (!data.content) throw new Error("Il file non ha contenuto leggibile");
     input.value = b64DecodeUnicode(data.content);
+    loadedPath = p;
     renderPreview();
     showStatus("Caricato!");
   } catch (e) {
@@ -870,7 +951,36 @@ async function loadFromGitHub() {
 }
 
 // --- SALVATAGGIO CON RILEVAMENTO CONFLITTI (409) ---
+// --- CONTROLLI PRIMA DEL SALVATAGGIO ---
+// Segnala i problemi che rompono la pagina o la build del sito:
+//  - blocchi ::: aperti e non chiusi (o chiusi senza essere stati aperti)
+//  - immagini locali senza slash iniziale (rompono la build di VitePress)
+// I blocchi di codice (```) vengono ignorati, perché possono contenere ":::" come esempio.
+function findArticleProblems(text) {
+  const problems = [];
+  const lines = text.split('\n');
+  let inCode = false; const open = [];
+  lines.forEach((ln, i) => {
+    if (/^\s*(```|~~~)/.test(ln)) { inCode = !inCode; return; }
+    if (inCode) return;
+    if (/^:::\s*$/.test(ln)) {
+      if (open.length) open.pop(); else problems.push(`riga ${i + 1}: ":::" di chiusura senza un blocco aperto`);
+    } else if (/^:::\s*\S/.test(ln)) {
+      open.push({ n: i + 1, t: ln.trim() });
+    }
+  });
+  open.forEach(o => problems.push(`riga ${o.n}: il blocco "${o.t.slice(0, 40)}" non è chiuso (manca ":::")`));
+  if (inCode) problems.push('un blocco di codice (```) non è chiuso');
+  const imgs = [...text.matchAll(/!\[[^\]]*\]\(([^)\s]+)[^)]*\)/g)].map(m => m[1])
+    .concat([...text.matchAll(/<img[^>]+src=["']([^"']+)["']/g)].map(m => m[1]));
+  [...new Set(imgs)].filter(u => !/^(https?:)?\/\//i.test(u) && !u.startsWith('data:') && !u.startsWith('/'))
+    .forEach(u => problems.push(`immagine "${u}" senza "/" iniziale: scrivila "/${u.replace(/^\.?\//, '')}" o la build del sito si rompe`));
+  return problems;
+}
+
 async function syncTextToGitHub() {
+  const problems = findArticleProblems(input.value);
+  if (problems.length && !confirm('⚠️ Prima di salvare ho trovato questi problemi:\n\n• ' + problems.join('\n• ') + '\n\nSalvare comunque?')) return;
   const c = getCreds(); const p = document.getElementById('gh-path').value.trim();
   if(!c.token) return showStatus("No Token", 'error');
   const btn = document.getElementById('save-btn'); btn.innerText="⏳"; btn.disabled=true;
@@ -894,6 +1004,7 @@ async function syncTextToGitHub() {
       throw new Error(`Errore salvataggio (${res.status})${detail ? ': ' + detail : ''}`);
     }
     localStorage.removeItem('autosave_draft_' + p);
+    loadedPath = p;
     showStatus("Salvato!");
   } catch(e){ showStatus(e.message, 'error'); } finally{ btn.innerText="Salva"; btn.disabled=false; }
 }
