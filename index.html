@@ -158,6 +158,10 @@ window.MathJax = {
   body.app .modal select,body.app .modal textarea{border-radius:10px;border-color:var(--line)}
   body.app .modal input:focus,body.app .modal select:focus,body.app .modal textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
   body.app .modal button{touch-action:manipulation}
+  /* Finestre sempre visibili per intero, anche su schermi bassi o con zoom 100%: la finestra non supera lo schermo e il corpo scorre */
+  body.app .modal{overflow-y:auto;overscroll-behavior:contain}
+  body.app .modal > div{max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem)}
+  body.app .modal > div > .p-6,body.app .modal > div > .overflow-y-auto{overflow-y:auto;min-height:0;flex:1 1 auto;max-height:none;-webkit-overflow-scrolling:touch}
   @media (max-width:640px){
     body.app .modal{align-items:flex-end;padding:0}
     body.app .modal > div{max-width:none;width:100%;border-radius:22px 22px 0 0;max-height:92vh;max-height:92dvh}
@@ -724,6 +728,10 @@ async function suggestNextNumber() {
     const dirList = await dirRes.json();
     const mdFiles = Array.isArray(dirList) ? dirList.filter(f => f.type === 'file' && f.name.endsWith('.md')) : [];
     let maxNum = 0, found = 0;
+    // la numerazione è separata per scheda: Arduino e micro:bit hanno ciascuno la propria sequenza dentro la categoria
+    const platOf = (txt) => { const m = String(txt || '').match(/\((arduino|micro:?bit)\)\s*$/i); if (m) return /arduino/i.test(m[1]) ? 'arduino' : 'microbit'; const mb = /micro:?bit/i.test(txt || ''), ar = /arduino/i.test(txt || ''); return mb && !ar ? 'microbit' : ar && !mb ? 'arduino' : ''; };
+    const newTitle = document.getElementById('meta-title').value.trim();
+    const wantPlat = platOf(newTitle);
     await mapLimit(mdFiles, 6, async (f) => {
       try {
         const r = await fetch(`https://api.github.com/repos/${creds.owner}/${creds.repo}/contents/${f.path}`, { headers: { 'Authorization': `token ${creds.token}` } });
@@ -733,6 +741,12 @@ async function suggestNextNumber() {
         if (!fmMatch) return;
         const catMatch = fmMatch[1].match(/category:\s*(.+)/i);
         if (!catMatch || catMatch[1].trim().toLowerCase() !== cat.toLowerCase()) return;
+        if (wantPlat) {
+          const tm = fmMatch[1].match(/^\s*title:\s*(.+)$/mi);
+          const artTitle = tm ? tm[1].trim().replace(/^['"]|['"]$/g, '') : '';
+          const ap = platOf(artTitle) || platOf(f.name);
+          if (ap !== wantPlat) return;
+        }
         const numMatch = f.name.match(/^(\d+)/);
         if (numMatch) { found++; maxNum = Math.max(maxNum, parseInt(numMatch[1], 10)); }
       } catch (e) { /* file singolo non leggibile: lo saltiamo */ }
@@ -741,7 +755,9 @@ async function suggestNextNumber() {
     const title = document.getElementById('meta-title').value.trim();
     const slug = title ? title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-') : 'nuova-lezione';
     setFilePath(`docs/blog/${nextNum}-${slug}.md`);
-    showStatus(`Categoria "${cat}": trovate ${found} lezioni, prossimo numero = ${nextNum}`);
+    showStatus(wantPlat
+      ? `Categoria "${cat}", solo ${wantPlat === 'arduino' ? 'Arduino' : 'micro:bit'}: trovate ${found} lezioni, prossimo numero = ${nextNum}`
+      : `Categoria "${cat}": trovate ${found} lezioni, prossimo numero = ${nextNum}. Per numerare solo Arduino o solo micro:bit scrivi «(Arduino)» o «(micro:bit)» alla fine del titolo.`);
   } catch (e) {
     showStatus(e.message, 'error');
   } finally {
